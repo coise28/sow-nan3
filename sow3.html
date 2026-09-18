@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta chrest="utf-8" />
+  <title>出席調查表</title>
+</head>
+
+<body>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探勘保險登記（教學範例）</title>
+<style>
+  /* ===== 基本版面 ===== */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: #eef3ec;
+    color: #223322;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .card {
+    background: #ffffff;
+    max-width: 480px;
+    width: 100%;
+    border-radius: 12px;
+    padding: 28px 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    color: #2f5d3a;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #6b7d6b;
+    margin-bottom: 24px;
+  }
+  .step {
+    margin-bottom: 20px;
+  }
+  .step label.step-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cfd9cf;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #fbfdf9;
+  }
+  .checkbox-list {
+    border: 1px solid #cfd9cf;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: #fbfdf9;
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 15px;
+  }
+  .checkbox-row input {
+    margin-right: 10px;
+  }
+  button.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: #2f5d3a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button.submit-btn:hover { background: #244a2e; }
+
+  /* ===== 送出後的結果視窗 ===== */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 24px;
+    max-width: 340px;
+    text-align: center;
+  }
+  .modal .amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2f5d3a;
+    margin: 12px 0;
+  }
+  .modal .note {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .modal button {
+    padding: 8px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #2f5d3a;
+    color: #fff;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🍀 南三團集會出席調查</h1>
+  <div class="subtitle">11月</div>
+
+  <!-- Step 1：選小隊 -->
+  <div class="step">
+    <label class="step-title">Step1. 請選擇您所屬的小隊：</label>
+    <select id="teamSelect">
+      <option value="">請選擇...</option>
+    </select>
+  </div>
+
+  <!-- Step 2：選自己的自然名 -->
+  <div class="step">
+    <label class="step-title">Step2. 請選擇您的自然名：</label>
+    <select id="nameSelect">
+      <option value="">請先選擇小隊</option>
+    </select>
+  </div>
+
+  <!-- Step 3：勾選要投保的隊友 -->
+  <div class="step">
+    <label class="step-title">Step3. 請勾選要參與探勘且需要保險的成員：</label>
+    <div class="checkbox-list" id="checkboxList">
+      <div style="color:#999; font-size:14px;">請先選擇小隊</div>
+    </div>
+  </div>
+
+  <button class="submit-btn" onclick="submitForm()">送出並計算保費</button>
+</div>
+
+<!-- 送出後彈出的結果視窗 -->
+<div class="overlay" id="resultOverlay">
+  <div class="modal">
+    <div>🎉</div>
+    <div>您的本次探勘保險資料已成功更新</div>
+    <div>本次需繳交之保險總額為：</div>
+    <div class="amount" id="totalAmount">$0</div>
+    <div class="note">
+      記得要 Line Pay 或郵局轉帳<br>
+      匯款帳號請聯絡窗口索取
+    </div>
+    <button onclick="closeModal()">確認</button>
+  </div>
+</div>
+
+<script>
+  /* ============================================================
+     1. 資料設定區：之後只要改這裡，網頁內容就會跟著變
+     ============================================================ */
+
+  // 每人保費（範例值，可依實際情況調整）
+  const PREMIUM_PER_PERSON = 50;
+
+  // 小隊 -> 隊員自然名 清單（範例資料，請換成你們自己的名單）
+  const TEAM_DATA = {
+    "花叢": ["山羌", "貓頭鷹", "石虎"],
+    "天空": ["台灣獼猴", "藍鵲", "野薑花"],
+    "草原": ["穿山甲", "山蘇", "溪哥"],
+    "大地": ["穿山甲", "山蘇", "溪哥"],
+    "99團": ["穿山甲", "山蘇", "溪哥"],
+      };
+
+  /* ============================================================
+     2. 抓取 HTML 元素，之後要操作畫面內容都靠這些變數
+     ============================================================ */
+  const teamSelect = document.getElementById("teamSelect");
+  const nameSelect = document.getElementById("nameSelect");
+  const checkboxList = document.getElementById("checkboxList");
+
+  /* ============================================================
+     3. 初始化：把小隊名稱塞進第一個下拉選單
+     ============================================================ */
+  function initTeamOptions() {
+    for (const teamName in TEAM_DATA) {
+      const option = document.createElement("option");
+      option.value = teamName;
+      option.textContent = teamName;
+      teamSelect.appendChild(option);
+    }
+  }
+  initTeamOptions();
+
+  /* ============================================================
+     4. 當使用者選了小隊 -> 動態產生「自然名」下拉選單
+        以及「勾選隊友」的 checkbox 清單
+     ============================================================ */
+  teamSelect.addEventListener("change", () => {
+    const selectedTeam = teamSelect.value;
+    const members = TEAM_DATA[selectedTeam] || [];
+
+    // --- 更新自然名下拉選單 ---
+    nameSelect.innerHTML = ""; // 先清空
+    if (members.length === 0) {
+      nameSelect.innerHTML = "<option>請先選擇小隊</option>";
+    } else {
+      nameSelect.innerHTML = "<option value=''>請選擇...</option>";
+      members.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        nameSelect.appendChild(option);
+      });
+    }
+
+    // --- 更新勾選清單 ---
+    checkboxList.innerHTML = "";
+    if (members.length === 0) {
+      checkboxList.innerHTML = "<div style='color:#999;font-size:14px;'>請先選擇小隊</div>";
+      return;
+    }
+    members.forEach(name => {
+      const row = document.createElement("div");
+      row.className = "checkbox-row";
+      row.innerHTML = `
+        <input type="checkbox" value="${name}" class="member-checkbox">
+        <span>${name}</span>
+      `;
+      checkboxList.appendChild(row);
+    });
+  });
+
+  /* ============================================================
+     5. 送出表單：計算勾選人數 * 每人保費，
+        並把資料 POST 到 Google Apps Script，寫入 Google 試算表
+     ============================================================ */
+
+  // 把這裡換成你自己部署後拿到的網址
+  // 例如：https://script.google.com/macros/s/AKfycb.../exec
+  const APPS_SCRIPT_URL = "請貼上你的 Apps Script 部署網址";
+
+  function submitForm() {
+    const checkedBoxes = document.querySelectorAll(".member-checkbox:checked");
+    const memberNames = Array.from(checkedBoxes).map(box => box.value);
+    const total = memberNames.length * PREMIUM_PER_PERSON;
+
+    // 先組成要送出的資料物件
+    const payload = {
+      team: teamSelect.value,
+      name: nameSelect.value,
+      members: memberNames,
+      total: total
+    };
+
+    // 用 fetch 把資料 POST 到 Apps Script 網址
+    // mode: "no-cors" 是因為 Apps Script 不會回傳允許跨網域讀取的標頭，
+    // 用這個模式可以「送出去」，只是沒辦法讀取回應內容（多數登記表單夠用了）
+    fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload)
+    }).catch(err => {
+      console.error("送出失敗：", err);
+    });
+
+    // 不管有沒有拿到後端回應，先讓使用者看到金額和感謝畫面
+    document.getElementById("totalAmount").textContent = "$" + total;
+    document.getElementById("resultOverlay").classList.add("show");
+  }
+
+  function closeModal() {
+    document.getElementById("resultOverlay").classList.remove("show");
+  }
+</script>
+
+</body>
+</html>
+</body>
+
+</html>
