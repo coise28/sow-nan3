@@ -1,19 +1,10 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-  <meta chrest="utf-8" />
-  <title>出席調查表</title>
-</head>
-
-<body>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>探勘保險登記（教學範例）</title>
+<title>探勘出席登記</title>
 <style>
-  /* ===== 基本版面 ===== */
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -32,25 +23,15 @@
     padding: 28px 24px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   }
-  h1 {
-    font-size: 22px;
-    margin: 0 0 4px;
-    color: #2f5d3a;
-  }
-  .subtitle {
-    font-size: 13px;
-    color: #6b7d6b;
-    margin-bottom: 24px;
-  }
-  .step {
-    margin-bottom: 20px;
-  }
+  h1 { font-size: 22px; margin: 0 0 4px; color: #2f5d3a; }
+  .subtitle { font-size: 13px; color: #6b7d6b; margin-bottom: 24px; }
+  .step { margin-bottom: 22px; }
   .step label.step-title {
     display: block;
     font-weight: 600;
     margin-bottom: 8px;
   }
-  select {
+  select, input[type="text"] {
     width: 100%;
     padding: 10px;
     border: 1px solid #cfd9cf;
@@ -58,21 +39,70 @@
     font-size: 15px;
     background: #fbfdf9;
   }
-  .checkbox-list {
+
+  /* Step1 小隊藥丸按鈕 */
+  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    padding: 10px 18px;
     border: 1px solid #cfd9cf;
-    border-radius: 8px;
-    padding: 8px 12px;
+    border-radius: 999px;
+    background: #fbfdf9;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+  }
+  .pill.selected { background: #3b6ee0; border-color: #3b6ee0; color: #fff; }
+
+  /* Step3 每位成員的出席狀態卡片 */
+  .member-list { display: flex; flex-direction: column; gap: 12px; }
+  .member-card {
+    border: 1px solid #cfd9cf;
+    border-radius: 10px;
+    padding: 12px 14px;
     background: #fbfdf9;
   }
-  .checkbox-row {
+  .member-name { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+
+  .status-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .status-btn {
+    flex: 1;
+    min-width: 64px;
+    text-align: center;
+    padding: 6px 4px;
+    border: 1px solid #cfd9cf;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    background: #fff;
+  }
+  /* 四種狀態各自的選中顏色 */
+  .status-btn.selected[data-status="出席"] { background: #2f5d3a; color: #fff; border-color: #2f5d3a; }
+  .status-btn.selected[data-status="請假"] { background: #b0472e; color: #fff; border-color: #b0472e; }
+  .status-btn.selected[data-status="早退"] { background: #c98a1b; color: #fff; border-color: #c98a1b; }
+  .status-btn.selected[data-status="晚到"] { background: #3b6ee0; color: #fff; border-color: #3b6ee0; }
+
+  .meal-row {
     display: flex;
     align-items: center;
-    padding: 6px 0;
-    font-size: 15px;
+    gap: 8px;
+    font-size: 14px;
   }
-  .checkbox-row input {
-    margin-right: 10px;
+  .meal-row input { width: auto; }
+
+  /* Step4 備註欄（車牌、整體備註） */
+  .note-field { margin-bottom: 14px; }
+  .note-field label {
+    display: block;
+    font-size: 13px;
+    color: #445544;
+    margin-bottom: 4px;
   }
+
   button.submit-btn {
     width: 100%;
     padding: 12px;
@@ -82,10 +112,10 @@
     border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
+    margin-top: 8px;
   }
   button.submit-btn:hover { background: #244a2e; }
 
-  /* ===== 送出後的結果視窗 ===== */
   .overlay {
     display: none;
     position: fixed;
@@ -102,17 +132,11 @@
     max-width: 340px;
     text-align: center;
   }
-  .modal .amount {
-    font-size: 32px;
-    font-weight: 700;
-    color: #2f5d3a;
-    margin: 12px 0;
-  }
   .modal .note {
     font-size: 13px;
     color: #666;
     line-height: 1.6;
-    margin-bottom: 16px;
+    margin: 12px 0 16px;
   }
   .modal button {
     padding: 8px 24px;
@@ -127,18 +151,16 @@
 <body>
 
 <div class="card">
-  <h1>🍀 南三團集會出席調查</h1>
-  <div class="subtitle">11月</div>
+  <h1>🍀 探勘出席登記</h1>
+  <div class="subtitle">請如實填寫，方便隊輔安排車輛與餐點數量</div>
 
-  <!-- Step 1：選小隊 -->
+  <!-- Step1：選小隊 -->
   <div class="step">
     <label class="step-title">Step1. 請選擇您所屬的小隊：</label>
-    <select id="teamSelect">
-      <option value="">請選擇...</option>
-    </select>
+    <div class="pill-group" id="teamPills"></div>
   </div>
 
-  <!-- Step 2：選自己的自然名 -->
+  <!-- Step2：選自然名（登記人本人） -->
   <div class="step">
     <label class="step-title">Step2. 請選擇您的自然名：</label>
     <select id="nameSelect">
@@ -146,27 +168,36 @@
     </select>
   </div>
 
-  <!-- Step 3：勾選要投保的隊友 -->
+  <!-- Step3：家庭成員各自的出席狀態 + 是否用餐 -->
   <div class="step">
-    <label class="step-title">Step3. 請勾選要參與探勘且需要保險的成員：</label>
-    <div class="checkbox-list" id="checkboxList">
-      <div style="color:#999; font-size:14px;">請先選擇小隊</div>
+    <label class="step-title">Step3. 請填寫每位成員的出席狀態：</label>
+    <div class="member-list" id="memberList">
+      <div style="color:#999; font-size:14px;">請先完成 Step1、Step2</div>
     </div>
   </div>
 
-  <button class="submit-btn" onclick="submitForm()">送出並計算保費</button>
+  <!-- Step4：整體備註（車牌、額外留言） -->
+  <div class="step">
+    <label class="step-title">Step4. 其他資訊：</label>
+    <div class="note-field">
+      <label for="plateInput">車牌號碼（若自行開車前往，方便安排停車）</label>
+      <input type="text" id="plateInput" placeholder="例如 ABC-1234（無則留白）">
+    </div>
+    <div class="note-field">
+      <label for="remarkInput">備註留言（選填）</label>
+      <input type="text" id="remarkInput" placeholder="例如：素食、過敏原、其他需求">
+    </div>
+  </div>
+
+  <button class="submit-btn" onclick="submitForm()">送出出席登記</button>
 </div>
 
-<!-- 送出後彈出的結果視窗 -->
 <div class="overlay" id="resultOverlay">
   <div class="modal">
     <div>🎉</div>
-    <div>您的本次探勘保險資料已成功更新</div>
-    <div>本次需繳交之保險總額為：</div>
-    <div class="amount" id="totalAmount">$0</div>
+    <div>您的出席登記已成功送出</div>
     <div class="note">
-      記得要 Line Pay 或郵局轉帳<br>
-      匯款帳號請聯絡窗口索取
+      如需更改出席狀態，重新填寫送出即可
     </div>
     <button onclick="closeModal()">確認</button>
   </div>
@@ -174,116 +205,275 @@
 
 <script>
   /* ============================================================
-     1. 資料設定區：之後只要改這裡，網頁內容就會跟著變
+     1. 資料設定區：小隊 -> 家庭 -> 成員（不再分大人/小孩，
+        因為出席登記表不需要收費，只需要知道誰要來）
      ============================================================ */
-
-  // 每人保費（範例值，可依實際情況調整）
-  const PREMIUM_PER_PERSON = 50;
-
-  // 小隊 -> 隊員自然名 清單（範例資料，請換成你們自己的名單）
+  // members 改成物件陣列，每個成員標記 role: "adult"（大人）或 "kid"（小孩）
+  // Step2 只會列出 role 為 adult 的人；Step3 仍會列出整個家庭（含小孩）
   const TEAM_DATA = {
-    "花叢": ["山羌", "貓頭鷹", "石虎"],
-    "天空": ["台灣獼猴", "藍鵲", "野薑花"],
-    "草原": ["穿山甲", "山蘇", "溪哥"],
-    "大地": ["穿山甲", "山蘇", "溪哥"],
-    "99團": ["穿山甲", "山蘇", "溪哥"],
-      };
+    "花叢小隊": [
+      { family: "水家庭", members: [{ name: "水", role: "adult", group: "鷹團" }, { name: "太陽", role: "kid", group: "鷹團" }] },
+      { family: "藍喉鴝家庭", members: [{ name: "藍喉鴝", role: "adult", group: "其他" }, { name: "雨天", role: "adult", group: "鷹團" }, { name: "獅子", role: "kid", group: "鷹團" }] },
+      { family: "月亮家庭", members: [{ name: "月亮", role: "adult", group: "鷹團" }, { name: "土星", role: "kid", group: "鷹團" }] },
+      { family: "天竺葵家庭", members: [{ name: "天竺葵", role: "adult", group: "蟻團" }, { name: "水黽", role: "kid", group: "鷹團" }, { name: "白紋巨竹節蟲", role: "kid", group: "鹿團" }] },
+      { family: "藍腹鷴家庭", members: [{ name: "藍腹鷴", role: "adult", group: "蜂團" }, { name: "紅鶴", role: "kid", group: "鹿團" }, { name: "藪貓", role: "kid", group: "蜂團" }] },
+      { family: "水蜜桃家庭", members: [{ name: "水蜜桃", role: "adult", group: "蜂團" }, { name: "西瓜", role: "adult", group: "蜂團" }, { name: "小蘋果", role: "kid", group: "鹿團" }, { name: "小櫻桃", role: "kid", group: "蜂團" }] },
+      { family: "漩渦家庭", members: [{ name: "漩渦", role: "adult", group: "蜂團" }, { name: "檸檬桉", role: "adult", group: "蟻團" }, { name: "小刺蝟", role: "kid", group: "蜂團" }, { name: "小貝殼", role: "kid", group: "蜂團" }] },
+      { family: "瓢蟲家庭", members: [{ name: "瓢蟲", role: "adult", group: "蟻團" }, { name: "黑貓", role: "adult", group: "鹿團" }, { name: "暴龍", role: "kid", group: "鹿團" }, { name: "小蜜蜂", role: "kid", group: "蟻團" }] },
+      { family: "非洲象家庭", members: [{ name: "非洲象", role: "adult", group: "蟻團" }, { name: "雕鴞", role: "adult", group: "蜂團" }, { name: "大翅鯨", role: "kid", group: "蜂團" }, { name: "眼鏡王蛇", role: "kid", group: "蟻團" }] },
+      { family: "栗米家庭", members: [{ name: "栗米", role: "adult", group: "蜂團" }, { name: "柿林", role: "adult", group: "蜂團" }, { name: "橙茸", role: "kid", group: "蜂團" }, { name: "橙芮", role: "kid", group: "蟻團" }] },
+      { family: "紫蘇家庭", members: [{ name: "紫蘇", role: "adult", group: "蟻團" }, { name: "招潮蟹", role: "adult", group: "蟻團" }, { name: "梧桐", role: "kid", group: "蜂團" }, { name: "珍珠", role: "kid", group: "蟻團" }] },
+      { family: "螃蟹家庭", members: [{ name: "螃蟹", role: "adult", group: "蟻團" }, { name: "兔子", role: "adult", group: "蟻團" }, { name: "貓咪", role: "kid", group: "蟻團" }] },
+      { family: "水蓮家庭", members: [{ name: "水蓮", role: "adult", group: "蜂團" }, { name: "海豚", role: "kid", group: "蜂團" }] },
+      { family: "變色龍家庭", members: [{ name: "變色龍", role: "adult", group: "蜂團" }, { name: "茉莉花", role: "adult", group: "鹿團" }, { name: "小白花", role: "kid", group: "鹿團" }, { name: "布偶貓", role: "kid", group: "蜂團" }] },
+      { family: "海浪家庭", members: [{ name: "海浪", role: "adult", group: "蟻團" }, { name: "長頸鹿", role: "kid", group: "蟻團" }] },
+      { family: "長耳鴞家庭", members: [{ name: "長耳鴞", role: "adult", group: "蜂團" }, { name: "螢火蟲", role: "adult", group: "蜂團" }, { name: "紫蝶", role: "kid", group: "蜂團" }] },
+      { family: "黃腹琉璃家庭", members: [{ name: "黃腹琉璃", role: "adult", group: "蟻團" }, { name: "台灣藍鵲", role: "adult", group: "蟻團" }, { name: "黃山雀", role: "kid", group: "蟻團" }] },
+      { family: "金煌家庭", members: [{ name: "金煌", role: "adult", group: "鹿團" }, { name: "愛文", role: "kid", group: "鹿團" }] },
+      { family: "接骨莓家庭", members: [{ name: "接骨莓", role: "adult", group: "蟻團" }, { name: "劍齒虎", role: "adult", group: "蟻團" }, { name: "虎貓", role: "kid", group: "蟻團" }] }
+    ],
+    "天空小隊": [
+      { family: "樹懶家庭", members: [{ name: "樹懶", role: "adult", group: "鷹團" }, { name: "大白熊", role: "adult", group: "鷹團" }, { name: "小白兔", role: "kid", group: "鷹團" }] },
+      { family: "雪霽家庭", members: [{ name: "雪霽", role: "adult", group: "鹿團" }, { name: "日初", role: "adult", group: "鹿團" }, { name: "晴天", role: "kid", group: "鹿團" }] },
+      { family: "海芋家庭", members: [{ name: "海芋", role: "adult", group: "蟻團" }, { name: "黑迪仔(菜名)", role: "adult", group: "蜂團" }, { name: "小白鯨", role: "kid", group: "蜂團" }] },
+      { family: "琥珀家庭", members: [{ name: "琥珀", role: "adult", group: "蟻團" }, { name: "哈士奇", role: "adult", group: "鹿團" }, { name: "小花貓", role: "kid", group: "鹿團" }, { name: "水鹿", role: "kid", group: "蟻團" }] },
+      { family: "棉花家庭", members: [{ name: "棉花", role: "adult", group: "鹿團" }, { name: "小羊", role: "kid", group: "鹿團" }] },
+      { family: "霓虹家庭", members: [{ name: "霓虹", role: "adult", group: "鹿團" }, { name: "蚰蜒", role: "adult", group: "蜂團" }, { name: "朱雀", role: "kid", group: "鹿團" }, { name: "玄武", role: "kid", group: "蜂團" }] },
+      { family: "彩虹河家庭", members: [{ name: "彩虹河", role: "adult", group: "蟻團" }, { name: "紫藤花", role: "kid", group: "鹿團" }, { name: "香魚", role: "kid", group: "蟻團" }] },
+      { family: "林㹭家庭", members: [{ name: "林㹭", role: "adult", group: "蜂團" }, { name: "烏頭翁", role: "adult", group: "蟻團" }, { name: "革龜", role: "kid", group: "蜂團" }, { name: "地鼠", role: "kid", group: "蟻團" }] },
+      { family: "蒼霞家庭", members: [{ name: "蒼霞", role: "adult", group: "蜂團" }, { name: "冬陽", role: "adult", group: "蜂團" }, { name: "冰晶石", role: "kid", group: "蜂團" }, { name: "曙光", role: "kid", group: "蟻團" }] },
+      { family: "藍莓果家庭", members: [{ name: "藍莓果", role: "adult", group: "鹿團" }, { name: "白喉文鳥", role: "adult", group: "蜂團" }, { name: "鍬形蟲", role: "kid", group: "鹿團" }, { name: "小粉蝶", role: "kid", group: "蜂團" }] },
+      { family: "榛果家庭", members: [{ name: "榛果", role: "adult", group: "鹿團" }, { name: "熊童子", role: "adult", group: "鹿團" }, { name: "星兜", role: "kid", group: "鹿團" }] },
+      { family: "神木家庭", members: [{ name: "神木", role: "adult", group: "蟻團" }, { name: "岩蘭草", role: "adult", group: "蟻團" }, { name: "小雪兔", role: "kid", group: "蟻團" }] },
+      { family: "薊罌粟家庭", members: [{ name: "薊罌粟", role: "adult", group: "蟻團" }, { name: "野牛", role: "adult", group: "蟻團" }, { name: "柯爾鴨", role: "kid", group: "蟻團" }] },
+      { family: "茼蒿家庭", members: [{ name: "茼蒿", role: "adult", group: "蟻團" }, { name: "地瓜葉", role: "adult", group: "蟻團" }, { name: "玉米", role: "kid", group: "蟻團" }] },
+      { family: "珊瑚家庭", members: [{ name: "珊瑚", role: "adult", group: "蟻團" }, { name: "蝴蝶魚", role: "adult", group: "蟻團" }, { name: "海馬", role: "kid", group: "蟻團" }] },
+      { family: "折耳貓家庭", members: [{ name: "折耳貓", role: "adult", group: "蟻團" }, { name: "金吉拉", role: "adult", group: "蜂團" }, { name: "沙漠貓", role: "kid", group: "蜂團" }, { name: "三花貓", role: "kid", group: "蟻團" }] },
+      { family: "蒼狼家庭", members: [{ name: "蒼狼", role: "adult", group: "蜂團" }, { name: "雛菊", role: "adult", group: "蟻團" }, { name: "山貓", role: "kid", group: "蜂團" }, { name: "山豬", role: "kid", group: "蟻團" }] },
+      { family: "啄木鳥家庭", members: [{ name: "啄木鳥", role: "adult", group: "鹿團" }, { name: "紅豆", role: "adult", group: "蜂團" }, { name: "山椒魚", role: "kid", group: "鹿團" }, { name: "草鴞", role: "kid", group: "蜂團" }] }
+    ],
+    "草原小隊": [
+      { family: "狐狸家庭", members: [{ name: "狐狸", role: "adult", group: "鷹團" }, { name: "白狐", role: "adult", group: "鷹團" }] },
+      { family: "海鷗家庭", members: [{ name: "海鷗", role: "adult", group: "鷹團" }, { name: "鯨魚", role: "adult", group: "鷹團" }, { name: "企鵝", role: "kid", group: "鷹團" }] },
+      { family: "幸運草家庭", members: [{ name: "幸運草", role: "adult", group: "鹿團" }, { name: "獵豹", role: "kid", group: "鹿團" }, { name: "蝸牛", role: "kid", group: "蜂團" }] },
+      { family: "尤加利家庭", members: [{ name: "尤加利", role: "adult", group: "鹿團" }, { name: "無尾熊", role: "adult", group: "鹿團" }, { name: "龍貓", role: "kid", group: "鹿團" }] },
+      { family: "夜梟家庭", members: [{ name: "夜梟", role: "adult", group: "其他" }, { name: "雞蛋", role: "adult", group: "鹿團" }, { name: "奇異果", role: "kid", group: "鹿團" }] },
+      { family: "晨曦家庭", members: [{ name: "晨曦", role: "adult", group: "蟻團" }, { name: "花彩雀鶯", role: "kid", group: "蜂團" }, { name: "日本小飛鼠", role: "kid", group: "蟻團" }] },
+      { family: "鐵牛家庭", members: [{ name: "鐵牛", role: "adult", group: "蜂團" }, { name: "薰衣草", role: "adult", group: "蜂團" }, { name: "小魚兒", role: "kid", group: "蜂團" }] },
+      { family: "四葉草家庭", members: [{ name: "四葉草", role: "adult", group: "蜂團" }, { name: "滿天星", role: "adult", group: "其他" }, { name: "蒲公英", role: "kid", group: "鹿團" }, { name: "小草莓", role: "kid", group: "蜂團" }] },
+      { family: "苦楝家庭", members: [{ name: "苦楝", role: "adult", group: "蜂團" }, { name: "北極星", role: "adult", group: "其他" }, { name: "天竺鼠", role: "kid", group: "蜂團" }] },
+      { family: "狐獴家庭", members: [{ name: "狐獴", role: "adult", group: "蜂團" }, { name: "花椰菜", role: "adult", group: "鹿團" }, { name: "高麗菜", role: "kid", group: "鹿團" }, { name: "寒流", role: "kid", group: "蜂團" }] },
+      { family: "稻穗家庭", members: [{ name: "稻穗", role: "adult", group: "鹿團" }, { name: "荔枝", role: "adult", group: "鹿團" }, { name: "松鼠猴", role: "kid", group: "鹿團" }, { name: "浣熊", role: "kid", group: "蜂團" }] },
+      { family: "樹蛙家庭", members: [{ name: "樹蛙", role: "adult", group: "鹿團" }, { name: "黑熊", role: "adult", group: "鷹團" }, { name: "海豹", role: "kid", group: "鷹團" }, { name: "水豚君", role: "kid", group: "鹿團" }] },
+      { family: "夕霧草家庭", members: [{ name: "夕霧草", role: "adult", group: "蟻團" }, { name: "暹羅貓", role: "adult", group: "蟻團" }, { name: "奶油兔", role: "kid", group: "蟻團" }, { name: "曼赤肯貓", role: "kid", group: "蟻團" }] },
+      { family: "許願藤家庭", members: [{ name: "許願藤", role: "adult", group: "蟻團" }, { name: "獅子魚", role: "adult", group: "蜂團" }, { name: "白海豚", role: "kid", group: "蜂團" }, { name: "迷迭香", role: "kid", group: "蜂團" }, { name: "地震龍", role: "kid", group: "蟻團" }] },
+      { family: "康乃馨家庭", members: [{ name: "康乃馨", role: "adult", group: "蟻團" }, { name: "海王星", role: "adult", group: "蟻團" }, { name: "大刀螳螂", role: "kid", group: "蟻團" }, { name: "幽靈螳螂", role: "kid", group: "蟻團" }] },
+      { family: "海狗家庭", members: [{ name: "海狗", role: "adult", group: "蟻團" }, { name: "桂圓", role: "adult", group: "蟻團" }, { name: "星星", role: "kid", group: "蟻團" }] },
+      { family: "豹紋守宮家庭", members: [{ name: "豹紋守宮", role: "adult", group: "蟻團" }, { name: "小丑魚", role: "kid", group: "蜂團" }, { name: "羊駝", role: "kid", group: "蟻團" }] },
+      { family: "五色鳥家庭", members: [{ name: "五色鳥", role: "adult", group: "蟻團" }, { name: "大黃蜂", role: "adult", group: "蟻團" }, { name: "花栗鼠", role: "kid", group: "蟻團" }, { name: "紅松鼠", role: "kid", group: "蟻團" }] }
+    ],
+    "大地小隊": [
+      { family: "空氣家庭", members: [{ name: "空氣", role: "adult", group: "鹿團" }, { name: "水草", role: "adult", group: "鹿團" }, { name: "琉璃貓", role: "kid", group: "鹿團" }, { name: "小小蟻", role: "kid", group: "蟻團" }] },
+      { family: "夏至家庭", members: [{ name: "夏至", role: "adult", group: "蜂團" }, { name: "小寒", role: "adult", group: "鷹團" }, { name: "小雪", role: "kid", group: "鷹團" }, { name: "小滿", role: "kid", group: "蜂團" }] },
+      { family: "寄居蟹家庭", members: [{ name: "寄居蟹", role: "adult", group: "鹿團" }, { name: "椰子蟹", role: "adult", group: "蜂團" }, { name: "鯨鯊", role: "kid", group: "鹿團" }, { name: "粉紅兔", role: "kid", group: "蜂團" }] },
+      { family: "北朱雀家庭", members: [{ name: "北朱雀", role: "adult", group: "其他" }, { name: "紅雁", role: "kid", group: "鹿團" }, { name: "擬刺尾鯛", role: "kid", group: "蜂團" }] },
+      { family: "灰狼家庭", members: [{ name: "灰狼", role: "adult", group: "鹿團" }, { name: "海獺", role: "adult", group: "其他" }, { name: "北極熊", role: "kid", group: "鷹團" }, { name: "海龜", role: "kid", group: "鹿團" }] },
+      { family: "竹筴魚家庭", members: [{ name: "竹筴魚", role: "adult", group: "鷹團" }, { name: "柚子", role: "adult", group: "鷹團" }, { name: "麥芽", role: "kid", group: "鷹團" }] },
+      { family: "向日葵家庭", members: [{ name: "向日葵", role: "adult", group: "蟻團" }, { name: "鬱金香", role: "kid", group: "鹿團" }, { name: "白狼", role: "kid", group: "鹿團" }, { name: "袋鼠", role: "kid", group: "蟻團" }] },
+      { family: "青竹絲家庭", members: [{ name: "青竹絲", role: "adult", group: "鹿團" }, { name: "海芙蓉", role: "adult", group: "蜂團" }, { name: "蜜袋鼯", role: "kid", group: "鹿團" }, { name: "非洲獅", role: "kid", group: "蜂團" }] },
+      { family: "大鳳蝶家庭", members: [{ name: "大鳳蝶", role: "adult", group: "蜂團" }, { name: "果子狸", role: "adult", group: "鷹團" }, { name: "遊隼", role: "kid", group: "鷹團" }, { name: "環尾狐猴", role: "kid", group: "蜂團" }] },
+      { family: "短耳兔家庭", members: [{ name: "短耳兔", role: "adult", group: "鷹團" }, { name: "長耳兔", role: "kid", group: "鷹團" }] },
+      { family: "椪柑家庭", members: [{ name: "椪柑", role: "adult", group: "蟻團" }, { name: "Bee", role: "kid", group: "蟻團" }, { name: "犀牛", role: "kid", group: "蟻團" }] },
+      { family: "樹林家庭", members: [{ name: "樹林", role: "adult", group: "蜂團" }, { name: "海洋", role: "adult", group: "其他" }, { name: "柴犬", role: "kid", group: "蜂團" }] },
+      { family: "加州紅杉家庭", members: [{ name: "加州紅杉", role: "adult", group: "蜂團" }, { name: "艾草", role: "adult", group: "蜂團" }, { name: "紫丁香", role: "kid", group: "蜂團" }, { name: "紫羅蘭", role: "kid", group: "蜂團" }] },
+      { family: "黃鸝家庭", members: [{ name: "黃鸝", role: "adult", group: "蟻團" }, { name: "藍鯨", role: "adult", group: "蜂團" }, { name: "美洲豹", role: "kid", group: "蜂團" }, { name: "蜂鷹", role: "kid", group: "蜂團" }, { name: "鸚鵡", role: "kid", group: "蟻團" }] },
+      { family: "熊貓家庭", members: [{ name: "熊貓", role: "adult", group: "蟻團" }, { name: "虎鯨", role: "kid", group: "蟻團" }] },
+      { family: "山嵐家庭", members: [{ name: "山嵐", role: "adult", group: "蟻團" }, { name: "雪鴞", role: "adult", group: "蟻團" }, { name: "紫水晶", role: "kid", group: "蟻團" }, { name: "冰島馬", role: "kid", group: "蟻團" }] },
+      { family: "白鷺鷥家庭", members: [{ name: "白鷺鷥", role: "adult", group: "蟻團" }, { name: "水牛", role: "adult", group: "蟻團" }, { name: "麻雀", role: "kid", group: "蟻團" }] },
+      { family: "石虎家庭", members: [{ name: "石虎", role: "adult", group: "蟻團" }, { name: "美國短毛貓", role: "adult", group: "蟻團" }, { name: "小象", role: "kid", group: "蟻團" }] }
+    ]
+  };
+
+  const STATUS_OPTIONS = ["出席", "請假", "早退", "晚到"];
 
   /* ============================================================
-     2. 抓取 HTML 元素，之後要操作畫面內容都靠這些變數
+     2. 抓取 HTML 元素
      ============================================================ */
-  const teamSelect = document.getElementById("teamSelect");
+  const teamPillsEl = document.getElementById("teamPills");
   const nameSelect = document.getElementById("nameSelect");
-  const checkboxList = document.getElementById("checkboxList");
+  const memberList = document.getElementById("memberList");
+
+  let selectedTeam = "";
+  let currentFamilyName = ""; // 目前顯示中的家庭名稱
+  // 存放每位成員目前選到的狀態，例如 { "海狗": "出席", "星星": "早退" }
+  let memberStatus = {};
+  // 存放每位成員是否需要用餐，例如 { "海狗": true, "星星": false }
+  let memberMeal = {};
+  // 存放每位成員的身份與團別，例如 { "海狗": { role: "adult", group: "蟻團" } }
+  let memberInfo = {};
 
   /* ============================================================
-     3. 初始化：把小隊名稱塞進第一個下拉選單
+     3. Step1：把小隊做成藥丸按鈕
      ============================================================ */
-  function initTeamOptions() {
-    for (const teamName in TEAM_DATA) {
-      const option = document.createElement("option");
-      option.value = teamName;
-      option.textContent = teamName;
-      teamSelect.appendChild(option);
-    }
+  function initTeamPills() {
+    Object.keys(TEAM_DATA).forEach(teamName => {
+      const pill = document.createElement("div");
+      pill.className = "pill";
+      pill.textContent = teamName;
+      pill.onclick = () => selectTeam(teamName, pill);
+      teamPillsEl.appendChild(pill);
+    });
   }
-  initTeamOptions();
+  initTeamPills();
+
+  function selectTeam(teamName, pillEl) {
+    selectedTeam = teamName;
+    document.querySelectorAll(".pill").forEach(p => p.classList.remove("selected"));
+    pillEl.classList.add("selected");
+    populateNameOptions(teamName);
+    memberList.innerHTML = "<div style='color:#999;font-size:14px;'>請選擇 Step2 的自然名</div>";
+  }
 
   /* ============================================================
-     4. 當使用者選了小隊 -> 動態產生「自然名」下拉選單
-        以及「勾選隊友」的 checkbox 清單
+     4. Step2：列出這個小隊底下所有人的自然名
+        （出席登記不用分大人小孩，全部人都可以是登記人）
      ============================================================ */
-  teamSelect.addEventListener("change", () => {
-    const selectedTeam = teamSelect.value;
-    const members = TEAM_DATA[selectedTeam] || [];
+  function populateNameOptions(teamName) {
+    const families = TEAM_DATA[teamName] || [];
+    nameSelect.innerHTML = "<option value=''>請選擇...</option>";
+    families.forEach(fam => {
+      fam.members
+        .filter(m => m.role === "adult")   // 只有大人可以當登記人
+        .forEach(adult => {
+          const opt = document.createElement("option");
+          opt.value = adult.name;
+          opt.textContent = adult.name;
+          nameSelect.appendChild(opt);
+        });
+    });
+  }
 
-    // --- 更新自然名下拉選單 ---
-    nameSelect.innerHTML = ""; // 先清空
-    if (members.length === 0) {
-      nameSelect.innerHTML = "<option>請先選擇小隊</option>";
-    } else {
-      nameSelect.innerHTML = "<option value=''>請選擇...</option>";
-      members.forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        nameSelect.appendChild(option);
-      });
-    }
+  /* ============================================================
+     5. Step3：選了自然名後，反查所屬家庭，
+        列出整個家庭成員，每人一組「狀態按鈕 + 用餐勾選」
+     ============================================================ */
+  nameSelect.addEventListener("change", () => {
+    const selectedName = nameSelect.value;
+    const families = TEAM_DATA[selectedTeam] || [];
 
-    // --- 更新勾選清單 ---
-    checkboxList.innerHTML = "";
-    if (members.length === 0) {
-      checkboxList.innerHTML = "<div style='color:#999;font-size:14px;'>請先選擇小隊</div>";
+    memberList.innerHTML = "";
+    memberStatus = {};
+    memberMeal = {};
+    memberInfo = {}; // 記錄每位成員的 role（大人/小孩）和 group（蟻/蜂/鹿/鷹/其他）
+
+    if (!selectedName) {
+      memberList.innerHTML = "<div style='color:#999;font-size:14px;'>請選擇 Step2 的自然名</div>";
       return;
     }
-    members.forEach(name => {
-      const row = document.createElement("div");
-      row.className = "checkbox-row";
-      row.innerHTML = `
-        <input type="checkbox" value="${name}" class="member-checkbox">
-        <span>${name}</span>
+
+    const myFamily = families.find(fam =>
+      fam.members.some(m => m.name === selectedName)
+    );
+    if (!myFamily) return;
+
+    currentFamilyName = myFamily.family; // 記下目前這個家庭的名稱，送出時要用
+
+    myFamily.members.forEach(member => {
+      const name = member.name;
+      // 預設登記人自己是「出席」，其他家人（含小孩）先不預設，讓登記人自己選
+      memberStatus[name] = name === selectedName ? "出席" : "";
+      memberMeal[name] = false;
+      memberInfo[name] = { role: member.role, group: member.group };
+
+      const card = document.createElement("div");
+      card.className = "member-card";
+
+      const statusButtonsHtml = STATUS_OPTIONS.map(status => `
+        <div class="status-btn ${memberStatus[name] === status ? "selected" : ""}"
+             data-status="${status}"
+             onclick="setStatus('${name}', '${status}', this)">
+          ${status}
+        </div>
+      `).join("");
+
+      card.innerHTML = `
+        <div class="member-name">${name}</div>
+        <div class="status-group">${statusButtonsHtml}</div>
+        <label class="meal-row">
+          <input type="checkbox" onchange="setMeal('${name}', this.checked)">
+          需要用餐
+        </label>
       `;
-      checkboxList.appendChild(row);
+      memberList.appendChild(card);
     });
   });
 
+  // 點選狀態按鈕：更新資料，並同步該成員這一排按鈕的選中樣式
+  function setStatus(name, status, btnEl) {
+    memberStatus[name] = status;
+    const group = btnEl.parentElement;
+    group.querySelectorAll(".status-btn").forEach(b => b.classList.remove("selected"));
+    btnEl.classList.add("selected");
+  }
+
+  function setMeal(name, checked) {
+    memberMeal[name] = checked;
+  }
+
   /* ============================================================
-     5. 送出表單：計算勾選人數 * 每人保費，
-        並把資料 POST 到 Google Apps Script，寫入 Google 試算表
+     6. 送出表單：把「每一位成員」拆成獨立的一筆紀錄（records），
+        每筆都帶著小隊、家庭、姓名、身份、團別、狀態、用餐、
+        車牌、備註，一起 POST 到 Google Apps Script。
+        ------------------------------------------------------------
+        拆成一人一列，是為了讓 Google 試算表可以用
+        COUNTIFS／FILTER 等公式，直接依「團別 + 狀態」
+        統計人數、抓出名單（像出席調查報表那樣）。
      ============================================================ */
 
   // 把這裡換成你自己部署後拿到的網址
-  // 例如：https://script.google.com/macros/s/AKfycb.../exec
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfDosQLUueGCfTY9x730OpZGlIJzI4utZxvUNSppD7st1ufS0LZ-Zvw9FAvBrBMIlj/exec";
+  const APPS_SCRIPT_URL = "請貼上你的 Apps Script 部署網址";
 
   function submitForm() {
-    const checkedBoxes = document.querySelectorAll(".member-checkbox:checked");
-    const memberNames = Array.from(checkedBoxes).map(box => box.value);
-    const total = memberNames.length * PREMIUM_PER_PERSON;
+    if (!selectedTeam || !nameSelect.value) {
+      alert("請先完成 Step1 和 Step2");
+      return;
+    }
 
-    // 先組成要送出的資料物件
-    const payload = {
-      team: teamSelect.value,
-      name: nameSelect.value,
-      members: memberNames,
-      total: total
-    };
+    // 檢查是否每個人都已選擇狀態
+    const unselected = Object.keys(memberStatus).filter(name => !memberStatus[name]);
+    if (unselected.length > 0) {
+      alert("請幫「" + unselected.join("、") + "」選擇出席狀態");
+      return;
+    }
 
-    // 用 fetch 把資料 POST 到 Apps Script 網址
-    // mode: "no-cors" 是因為 Apps Script 不會回傳允許跨網域讀取的標頭，
-    // 用這個模式可以「送出去」，只是沒辦法讀取回應內容（多數登記表單夠用了）
+    const plate = document.getElementById("plateInput").value;
+    const remark = document.getElementById("remarkInput").value;
+    const now = new Date().toISOString();
+
+    // 把 memberStatus / memberMeal / memberInfo 組成一筆一筆的紀錄
+    const records = Object.keys(memberStatus).map(name => ({
+      time: now,
+      team: selectedTeam,
+      family: currentFamilyName,
+      registrant: nameSelect.value, // 這筆是由誰登記的
+      name: name,
+      role: memberInfo[name].role,   // adult / kid
+      group: memberInfo[name].group, // 蟻團/蜂團/鹿團/鷹團/其他
+      status: memberStatus[name],    // 出席/請假/早退/晚到
+      meal: memberMeal[name] ? "是" : "否",
+      plate: plate,
+      remark: remark
+    }));
+
     fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ records: records })
     }).catch(err => {
       console.error("送出失敗：", err);
     });
 
-    // 不管有沒有拿到後端回應，先讓使用者看到金額和感謝畫面
-    document.getElementById("totalAmount").textContent = "$" + total;
     document.getElementById("resultOverlay").classList.add("show");
   }
 
@@ -293,5 +483,4 @@
 </script>
 
 </body>
-
 </html>
