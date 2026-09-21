@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>團集會出席調查</title>
+<title>115-116南三團出席登記</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -138,6 +138,12 @@
     line-height: 1.6;
     margin: 12px 0 16px;
   }
+  .modal .amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2f5d3a;
+    margin: 6px 0;
+  }
   .modal button {
     padding: 8px 24px;
     border-radius: 8px;
@@ -151,8 +157,8 @@
 <body>
 
 <div class="card">
-  <h1>🍀 12月團集會出缺席調查</h1>
-  <div class="subtitle">團集會時間：12月13日</div>
+  <h1>🍀 12月出席調查</h1>
+  <div class="subtitle">團集會日期：12月13日</div>
 
   <!-- Step1：選小隊 -->
   <div class="step">
@@ -168,7 +174,6 @@
     </select>
   </div>
 
-
   <!-- Step3：家庭成員各自的出席狀態 + 是否用餐 -->
   <div class="step">
     <label class="step-title">Step3. 請填寫每位成員的出席狀態：</label>
@@ -177,20 +182,19 @@
     </div>
   </div>
 
-  <!-- Step4：整體備註（車牌、額外留言）-->
-  <div class="step" >
+  <!-- Step4：整體備註（車牌、額外留言） -->
+  <div class="step">
     <label class="step-title">Step4. 其他資訊：</label>
-    <div class="note-field"  style="display:none;“>
+    <div class="note-field">
       <label for="plateInput">車牌號碼（若自行開車前往，方便安排停車）</label>
       <input type="text" id="plateInput" placeholder="例如 ABC-1234（無則留白）">
     </div>
     <div class="note-field">
       <label for="remarkInput">備註留言（選填）</label>
-      <input type="text" id="remarkInput" placeholder="例如：晚到早退時間、其他需求">
+      <input type="text" id="remarkInput" placeholder="例如：素食、過敏原、其他需求">
     </div>
-  </div> 
+  </div>
 
-    
   <button class="submit-btn" onclick="submitForm()">送出出席登記</button>
 </div>
 
@@ -198,6 +202,8 @@
   <div class="modal">
     <div>🎉</div>
     <div>您的出席登記已成功送出</div>
+    <div>本次用餐費用總計：</div>
+    <div class="amount" id="mealFeeAmount">$0</div>
     <div class="note">
       如需更改出席狀態，重新填寫送出即可
     </div>
@@ -213,90 +219,105 @@
   // members 改成物件陣列，每個成員標記 role: "adult"（大人）或 "kid"（小孩）
   // Step2 只會列出 role 為 adult 的人；Step3 仍會列出整個家庭（含小孩）
   const TEAM_DATA = {
-    "花叢小隊": [
-      { family: "水家庭", members: [{ name: "水", role: "adult", group: "鷹團" }, { name: "太陽", role: "kid", group: "鷹團" }] },
-      { family: "藍喉鴝家庭", members: [{ name: "藍喉鴝", role: "adult", group: "其他" }, { name: "雨天", role: "adult", group: "鷹團" }, { name: "獅子", role: "kid", group: "鷹團" }] },
-      { family: "月亮家庭", members: [{ name: "月亮", role: "adult", group: "鷹團" }, { name: "土星", role: "kid", group: "鷹團" }] },
-      { family: "天竺葵家庭", members: [{ name: "天竺葵", role: "adult", group: "蟻團" }, { name: "水黽", role: "kid", group: "鷹團" }, { name: "白紋巨竹節蟲", role: "kid", group: "鹿團" }] },
-      { family: "藍腹鷴家庭", members: [{ name: "藍腹鷴", role: "adult", group: "蜂團" }, { name: "紅鶴", role: "kid", group: "鹿團" }, { name: "藪貓", role: "kid", group: "蜂團" }] },
-      { family: "水蜜桃家庭", members: [{ name: "水蜜桃", role: "adult", group: "蜂團" }, { name: "西瓜", role: "adult", group: "蜂團" }, { name: "小蘋果", role: "kid", group: "鹿團" }, { name: "小櫻桃", role: "kid", group: "蜂團" }] },
-      { family: "漩渦家庭", members: [{ name: "漩渦", role: "adult", group: "蜂團" }, { name: "檸檬桉", role: "adult", group: "蟻團" }, { name: "小刺蝟", role: "kid", group: "蜂團" }, { name: "小貝殼", role: "kid", group: "蜂團" }] },
-      { family: "瓢蟲家庭", members: [{ name: "瓢蟲", role: "adult", group: "蟻團" }, { name: "黑貓", role: "adult", group: "鹿團" }, { name: "暴龍", role: "kid", group: "鹿團" }, { name: "小蜜蜂", role: "kid", group: "蟻團" }] },
-      { family: "非洲象家庭", members: [{ name: "非洲象", role: "adult", group: "蟻團" }, { name: "雕鴞", role: "adult", group: "蜂團" }, { name: "大翅鯨", role: "kid", group: "蜂團" }, { name: "眼鏡王蛇", role: "kid", group: "蟻團" }] },
-      { family: "栗米家庭", members: [{ name: "栗米", role: "adult", group: "蜂團" }, { name: "柿林", role: "adult", group: "蜂團" }, { name: "橙茸", role: "kid", group: "蜂團" }, { name: "橙芮", role: "kid", group: "蟻團" }] },
-      { family: "紫蘇家庭", members: [{ name: "紫蘇", role: "adult", group: "蟻團" }, { name: "招潮蟹", role: "adult", group: "蟻團" }, { name: "梧桐", role: "kid", group: "蜂團" }, { name: "珍珠", role: "kid", group: "蟻團" }] },
-      { family: "螃蟹家庭", members: [{ name: "螃蟹", role: "adult", group: "蟻團" }, { name: "兔子", role: "adult", group: "蟻團" }, { name: "貓咪", role: "kid", group: "蟻團" }] },
-      { family: "水蓮家庭", members: [{ name: "水蓮", role: "adult", group: "蜂團" }, { name: "海豚", role: "kid", group: "蜂團" }] },
-      { family: "變色龍家庭", members: [{ name: "變色龍", role: "adult", group: "蜂團" }, { name: "茉莉花", role: "adult", group: "鹿團" }, { name: "小白花", role: "kid", group: "鹿團" }, { name: "布偶貓", role: "kid", group: "蜂團" }] },
-      { family: "海浪家庭", members: [{ name: "海浪", role: "adult", group: "蟻團" }, { name: "長頸鹿", role: "kid", group: "蟻團" }] },
-      { family: "長耳鴞家庭", members: [{ name: "長耳鴞", role: "adult", group: "蜂團" }, { name: "螢火蟲", role: "adult", group: "蜂團" }, { name: "紫蝶", role: "kid", group: "蜂團" }] },
-      { family: "黃腹琉璃家庭", members: [{ name: "黃腹琉璃", role: "adult", group: "蟻團" }, { name: "台灣藍鵲", role: "adult", group: "蟻團" }, { name: "黃山雀", role: "kid", group: "蟻團" }] },
-      { family: "金煌家庭", members: [{ name: "金煌", role: "adult", group: "鹿團" }, { name: "愛文", role: "kid", group: "鹿團" }] },
-      { family: "接骨莓家庭", members: [{ name: "接骨莓", role: "adult", group: "蟻團" }, { name: "劍齒虎", role: "adult", group: "蟻團" }, { name: "虎貓", role: "kid", group: "蟻團" }] }
-    ],
-    "天空小隊": [
-      { family: "樹懶家庭", members: [{ name: "樹懶", role: "adult", group: "鷹團" }, { name: "大白熊", role: "adult", group: "鷹團" }, { name: "小白兔", role: "kid", group: "鷹團" }] },
-      { family: "雪霽家庭", members: [{ name: "雪霽", role: "adult", group: "鹿團" }, { name: "日初", role: "adult", group: "鹿團" }, { name: "晴天", role: "kid", group: "鹿團" }] },
-      { family: "海芋家庭", members: [{ name: "海芋", role: "adult", group: "蟻團" }, { name: "黑迪仔(菜名)", role: "adult", group: "蜂團" }, { name: "小白鯨", role: "kid", group: "蜂團" }] },
-      { family: "琥珀家庭", members: [{ name: "琥珀", role: "adult", group: "蟻團" }, { name: "哈士奇", role: "adult", group: "鹿團" }, { name: "小花貓", role: "kid", group: "鹿團" }, { name: "水鹿", role: "kid", group: "蟻團" }] },
-      { family: "棉花家庭", members: [{ name: "棉花", role: "adult", group: "鹿團" }, { name: "小羊", role: "kid", group: "鹿團" }] },
-      { family: "霓虹家庭", members: [{ name: "霓虹", role: "adult", group: "鹿團" }, { name: "蚰蜒", role: "adult", group: "蜂團" }, { name: "朱雀", role: "kid", group: "鹿團" }, { name: "玄武", role: "kid", group: "蜂團" }] },
-      { family: "彩虹河家庭", members: [{ name: "彩虹河", role: "adult", group: "蟻團" }, { name: "紫藤花", role: "kid", group: "鹿團" }, { name: "香魚", role: "kid", group: "蟻團" }] },
-      { family: "林㹭家庭", members: [{ name: "林㹭", role: "adult", group: "蜂團" }, { name: "烏頭翁", role: "adult", group: "蟻團" }, { name: "革龜", role: "kid", group: "蜂團" }, { name: "地鼠", role: "kid", group: "蟻團" }] },
-      { family: "蒼霞家庭", members: [{ name: "蒼霞", role: "adult", group: "蜂團" }, { name: "冬陽", role: "adult", group: "蜂團" }, { name: "冰晶石", role: "kid", group: "蜂團" }, { name: "曙光", role: "kid", group: "蟻團" }] },
-      { family: "藍莓果家庭", members: [{ name: "藍莓果", role: "adult", group: "鹿團" }, { name: "白喉文鳥", role: "adult", group: "蜂團" }, { name: "鍬形蟲", role: "kid", group: "鹿團" }, { name: "小粉蝶", role: "kid", group: "蜂團" }] },
-      { family: "榛果家庭", members: [{ name: "榛果", role: "adult", group: "鹿團" }, { name: "熊童子", role: "adult", group: "鹿團" }, { name: "星兜", role: "kid", group: "鹿團" }] },
-      { family: "神木家庭", members: [{ name: "神木", role: "adult", group: "蟻團" }, { name: "岩蘭草", role: "adult", group: "蟻團" }, { name: "小雪兔", role: "kid", group: "蟻團" }] },
-      { family: "薊罌粟家庭", members: [{ name: "薊罌粟", role: "adult", group: "蟻團" }, { name: "野牛", role: "adult", group: "蟻團" }, { name: "柯爾鴨", role: "kid", group: "蟻團" }] },
-      { family: "茼蒿家庭", members: [{ name: "茼蒿", role: "adult", group: "蟻團" }, { name: "地瓜葉", role: "adult", group: "蟻團" }, { name: "玉米", role: "kid", group: "蟻團" }] },
-      { family: "珊瑚家庭", members: [{ name: "珊瑚", role: "adult", group: "蟻團" }, { name: "蝴蝶魚", role: "adult", group: "蟻團" }, { name: "海馬", role: "kid", group: "蟻團" }] },
-      { family: "折耳貓家庭", members: [{ name: "折耳貓", role: "adult", group: "蟻團" }, { name: "金吉拉", role: "adult", group: "蜂團" }, { name: "沙漠貓", role: "kid", group: "蜂團" }, { name: "三花貓", role: "kid", group: "蟻團" }] },
-      { family: "蒼狼家庭", members: [{ name: "蒼狼", role: "adult", group: "蜂團" }, { name: "雛菊", role: "adult", group: "蟻團" }, { name: "山貓", role: "kid", group: "蜂團" }, { name: "山豬", role: "kid", group: "蟻團" }] },
-      { family: "啄木鳥家庭", members: [{ name: "啄木鳥", role: "adult", group: "鹿團" }, { name: "紅豆", role: "adult", group: "蜂團" }, { name: "山椒魚", role: "kid", group: "鹿團" }, { name: "草鴞", role: "kid", group: "蜂團" }] }
+    "大地小隊": [
+      { family: "水草家庭", members: [{ name: "空氣家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "水草", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "空氣", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "琉璃貓", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "小寒家庭", members: [{ name: "小雪", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "小寒", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "小滿", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "夏至", role: "adult", group: "蜂團", category: "B蜂工" }] },
+      { family: "寄居蟹家庭", members: [{ name: "粉紅兔", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "寄居蟹", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "椰子蟹", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "鯨鯊", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "北朱雀家庭", members: [{ name: "北朱雀", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "紅雁", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "擬刺尾鯛", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "灰狼家庭", members: [{ name: "北極熊", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "灰狼", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "海龜", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "海獺", role: "adult", group: "其他", category: "S育成會長" }] },
+      { family: "竹莢魚家庭", members: [{ name: "竹莢魚", role: "adult", group: "鷹團", category: "E鷹工" }, { name: "柚子", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "麥芽", role: "kid", group: "鷹團", category: "E小鷹" }] },
+      { family: "向日葵家庭", members: [{ name: "白狼", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "向日葵", role: "adult", group: "蟻團", category: "S蟻育" }, { name: "袋鼠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "鬱金香", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "青竹絲家庭", members: [{ name: "青竹絲", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "非洲獅", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "海芙蓉", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "蜜袋鼯", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "大鳳蝶家庭", members: [{ name: "大鳳蝶", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "果子狸", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "遊隼", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "環尾狐猴", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "短耳兔家庭", members: [{ name: "長耳兔", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "短耳兔", role: "adult", group: "鷹團", category: "S鷹育" }] },
+      { family: "椪柑家庭", members: [{ name: "椪柑", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "犀牛", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "Bee", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "海洋家庭", members: [{ name: "柴犬", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "海洋", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "樹林", role: "adult", group: "蜂團", category: "S大蜂" }] },
+      { family: "加州紅杉家庭", members: [{ name: "加州紅杉", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "艾草", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "紫丁香", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "紫羅蘭", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "黃鸝家庭", members: [{ name: "美洲豹", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "黃鸝", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "蜂鷹", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "藍鯨", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "鸚鵡", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "熊貓家庭", members: [{ name: "熊貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "虎鯨", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "山嵐家庭", members: [{ name: "山嵐", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "雪鴞", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "紫水晶", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "冰島馬", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "白鷺鷥家庭", members: [{ name: "白鷺鷥", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "水牛", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "麻雀", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "石虎家庭", members: [{ name: "石虎", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "美國短毛貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "小象", role: "kid", group: "蟻團", category: "A小蟻" }] }
     ],
     "草原小隊": [
-      { family: "狐狸家庭", members: [{ name: "狐狸", role: "adult", group: "鷹團" }, { name: "白狐", role: "adult", group: "鷹團" }] },
-      { family: "海鷗家庭", members: [{ name: "海鷗", role: "adult", group: "鷹團" }, { name: "鯨魚", role: "adult", group: "鷹團" }, { name: "企鵝", role: "kid", group: "鷹團" }] },
-      { family: "幸運草家庭", members: [{ name: "幸運草", role: "adult", group: "鹿團" }, { name: "獵豹", role: "kid", group: "鹿團" }, { name: "蝸牛", role: "kid", group: "蜂團" }] },
-      { family: "尤加利家庭", members: [{ name: "尤加利", role: "adult", group: "鹿團" }, { name: "無尾熊", role: "adult", group: "鹿團" }, { name: "龍貓", role: "kid", group: "鹿團" }] },
-      { family: "夜梟家庭", members: [{ name: "夜梟", role: "adult", group: "其他" }, { name: "雞蛋", role: "adult", group: "鹿團" }, { name: "奇異果", role: "kid", group: "鹿團" }] },
-      { family: "晨曦家庭", members: [{ name: "晨曦", role: "adult", group: "蟻團" }, { name: "花彩雀鶯", role: "kid", group: "蜂團" }, { name: "日本小飛鼠", role: "kid", group: "蟻團" }] },
-      { family: "鐵牛家庭", members: [{ name: "鐵牛", role: "adult", group: "蜂團" }, { name: "薰衣草", role: "adult", group: "蜂團" }, { name: "小魚兒", role: "kid", group: "蜂團" }] },
-      { family: "四葉草家庭", members: [{ name: "四葉草", role: "adult", group: "蜂團" }, { name: "滿天星", role: "adult", group: "其他" }, { name: "蒲公英", role: "kid", group: "鹿團" }, { name: "小草莓", role: "kid", group: "蜂團" }] },
-      { family: "苦楝家庭", members: [{ name: "苦楝", role: "adult", group: "蜂團" }, { name: "北極星", role: "adult", group: "其他" }, { name: "天竺鼠", role: "kid", group: "蜂團" }] },
-      { family: "狐獴家庭", members: [{ name: "狐獴", role: "adult", group: "蜂團" }, { name: "花椰菜", role: "adult", group: "鹿團" }, { name: "高麗菜", role: "kid", group: "鹿團" }, { name: "寒流", role: "kid", group: "蜂團" }] },
-      { family: "稻穗家庭", members: [{ name: "稻穗", role: "adult", group: "鹿團" }, { name: "荔枝", role: "adult", group: "鹿團" }, { name: "松鼠猴", role: "kid", group: "鹿團" }, { name: "浣熊", role: "kid", group: "蜂團" }] },
-      { family: "樹蛙家庭", members: [{ name: "樹蛙", role: "adult", group: "鹿團" }, { name: "黑熊", role: "adult", group: "鷹團" }, { name: "海豹", role: "kid", group: "鷹團" }, { name: "水豚君", role: "kid", group: "鹿團" }] },
-      { family: "夕霧草家庭", members: [{ name: "夕霧草", role: "adult", group: "蟻團" }, { name: "暹羅貓", role: "adult", group: "蟻團" }, { name: "奶油兔", role: "kid", group: "蟻團" }, { name: "曼赤肯貓", role: "kid", group: "蟻團" }] },
-      { family: "許願藤家庭", members: [{ name: "許願藤", role: "adult", group: "蟻團" }, { name: "獅子魚", role: "adult", group: "蜂團" }, { name: "白海豚", role: "kid", group: "蜂團" }, { name: "迷迭香", role: "kid", group: "蜂團" }, { name: "地震龍", role: "kid", group: "蟻團" }] },
-      { family: "康乃馨家庭", members: [{ name: "康乃馨", role: "adult", group: "蟻團" }, { name: "海王星", role: "adult", group: "蟻團" }, { name: "大刀螳螂", role: "kid", group: "蟻團" }, { name: "幽靈螳螂", role: "kid", group: "蟻團" }] },
-      { family: "海狗家庭", members: [{ name: "海狗", role: "adult", group: "蟻團" }, { name: "桂圓", role: "adult", group: "蟻團" }, { name: "星星", role: "kid", group: "蟻團" }] },
-      { family: "豹紋守宮家庭", members: [{ name: "豹紋守宮", role: "adult", group: "蟻團" }, { name: "小丑魚", role: "kid", group: "蜂團" }, { name: "羊駝", role: "kid", group: "蟻團" }] },
-      { family: "五色鳥家庭", members: [{ name: "五色鳥", role: "adult", group: "蟻團" }, { name: "大黃蜂", role: "adult", group: "蟻團" }, { name: "花栗鼠", role: "kid", group: "蟻團" }, { name: "紅松鼠", role: "kid", group: "蟻團" }] }
+      { family: "狐狸家庭", members: [{ name: "白狐", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "狐狸", role: "adult", group: "鷹團", category: "S鷹育" }] },
+      { family: "海鷗家庭", members: [{ name: "企鵝", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "海鷗", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "鯨魚", role: "adult", group: "鷹團", category: "E大鷹" }] },
+      { family: "幸運草家庭", members: [{ name: "幸運草", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "蝸牛", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "獵豹", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "尤加利家庭", members: [{ name: "尤加利", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "無尾熊", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "龍貓", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "夜梟家庭", members: [{ name: "夜梟", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "奇異果", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "雞蛋", role: "adult", group: "鹿團", category: "D鹿工" }] },
+      { family: "晨曦家庭", members: [{ name: "日本小飛鼠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "花彩雀鶯", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "晨曦", role: "adult", group: "蟻團", category: "A蟻工" }] },
+      { family: "薰衣草家庭", members: [{ name: "小魚兒", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "薰衣草", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "鐵牛", role: "adult", group: "蜂團", category: "S蜂育" }] },
+      { family: "四葉草家庭", members: [{ name: "小草莓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "四葉草", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "滿天星", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "蒲公英", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "北極星家庭", members: [{ name: "天竺鼠", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "北極星", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "苦楝", role: "adult", group: "蜂團", category: "B蜂工" }] },
+      { family: "狐獴 家庭", members: [{ name: "狐獴 ", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "花椰菜", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "高麗菜", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "寒流", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "荔枝家庭", members: [{ name: "松鼠猴", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "浣熊", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "荔枝", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "稻穗", role: "adult", group: "鹿團", category: "S鹿育" }] },
+      { family: "黑熊家庭", members: [{ name: "水豚君", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "海豹", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "黑熊", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "樹蛙", role: "adult", group: "鹿團", category: "S鹿育" }] },
+      { family: "夕霧草家庭", members: [{ name: "夕霧草", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "奶油兔", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "曼赤肯貓", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "暹羅貓", role: "adult", group: "蟻團", category: "S大蟻" }] },
+      { family: "許願藤家庭", members: [{ name: "許願藤家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "白海豚", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "地震龍", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "迷迭香", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "許願藤", role: "adult", group: "蟻團", category: "S蟻育" }, { name: "獅子魚", role: "adult", group: "蜂團", category: "S大蜂" }] },
+      { family: "康乃馨家庭", members: [{ name: "康乃馨", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "海王星", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "大刀螳螂", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "幽靈螳螂", role: "kid", group: "蟻團", category: "S小小蟻" }] },
+      { family: "海狗家庭", members: [{ name: "海狗", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "桂圓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "星星", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "豹紋守宮家庭", members: [{ name: "豹紋守宮", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "小丑魚", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "羊駝", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "五色鳥家庭", members: [{ name: "五色鳥", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "大黃蜂", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "花栗鼠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "紅松鼠", role: "kid", group: "蟻團", category: "A小蟻" }] }
     ],
-    "大地小隊": [
-      { family: "空氣家庭", members: [{ name: "空氣", role: "adult", group: "鹿團" }, { name: "水草", role: "adult", group: "鹿團" }, { name: "琉璃貓", role: "kid", group: "鹿團" }, { name: "小小蟻", role: "kid", group: "蟻團" }] },
-      { family: "夏至家庭", members: [{ name: "夏至", role: "adult", group: "蜂團" }, { name: "小寒", role: "adult", group: "鷹團" }, { name: "小雪", role: "kid", group: "鷹團" }, { name: "小滿", role: "kid", group: "蜂團" }] },
-      { family: "寄居蟹家庭", members: [{ name: "寄居蟹", role: "adult", group: "鹿團" }, { name: "椰子蟹", role: "adult", group: "蜂團" }, { name: "鯨鯊", role: "kid", group: "鹿團" }, { name: "粉紅兔", role: "kid", group: "蜂團" }] },
-      { family: "北朱雀家庭", members: [{ name: "北朱雀", role: "adult", group: "其他" }, { name: "紅雁", role: "kid", group: "鹿團" }, { name: "擬刺尾鯛", role: "kid", group: "蜂團" }] },
-      { family: "灰狼家庭", members: [{ name: "灰狼", role: "adult", group: "鹿團" }, { name: "海獺", role: "adult", group: "其他" }, { name: "北極熊", role: "kid", group: "鷹團" }, { name: "海龜", role: "kid", group: "鹿團" }] },
-      { family: "竹筴魚家庭", members: [{ name: "竹筴魚", role: "adult", group: "鷹團" }, { name: "柚子", role: "adult", group: "鷹團" }, { name: "麥芽", role: "kid", group: "鷹團" }] },
-      { family: "向日葵家庭", members: [{ name: "向日葵", role: "adult", group: "蟻團" }, { name: "鬱金香", role: "kid", group: "鹿團" }, { name: "白狼", role: "kid", group: "鹿團" }, { name: "袋鼠", role: "kid", group: "蟻團" }] },
-      { family: "青竹絲家庭", members: [{ name: "青竹絲", role: "adult", group: "鹿團" }, { name: "海芙蓉", role: "adult", group: "蜂團" }, { name: "蜜袋鼯", role: "kid", group: "鹿團" }, { name: "非洲獅", role: "kid", group: "蜂團" }] },
-      { family: "大鳳蝶家庭", members: [{ name: "大鳳蝶", role: "adult", group: "蜂團" }, { name: "果子狸", role: "adult", group: "鷹團" }, { name: "遊隼", role: "kid", group: "鷹團" }, { name: "環尾狐猴", role: "kid", group: "蜂團" }] },
-      { family: "短耳兔家庭", members: [{ name: "短耳兔", role: "adult", group: "鷹團" }, { name: "長耳兔", role: "kid", group: "鷹團" }] },
-      { family: "椪柑家庭", members: [{ name: "椪柑", role: "adult", group: "蟻團" }, { name: "Bee", role: "kid", group: "蟻團" }, { name: "犀牛", role: "kid", group: "蟻團" }] },
-      { family: "樹林家庭", members: [{ name: "樹林", role: "adult", group: "蜂團" }, { name: "海洋", role: "adult", group: "其他" }, { name: "柴犬", role: "kid", group: "蜂團" }] },
-      { family: "加州紅杉家庭", members: [{ name: "加州紅杉", role: "adult", group: "蜂團" }, { name: "艾草", role: "adult", group: "蜂團" }, { name: "紫丁香", role: "kid", group: "蜂團" }, { name: "紫羅蘭", role: "kid", group: "蜂團" }] },
-      { family: "黃鸝家庭", members: [{ name: "黃鸝", role: "adult", group: "蟻團" }, { name: "藍鯨", role: "adult", group: "蜂團" }, { name: "美洲豹", role: "kid", group: "蜂團" }, { name: "蜂鷹", role: "kid", group: "蜂團" }, { name: "鸚鵡", role: "kid", group: "蟻團" }] },
-      { family: "熊貓家庭", members: [{ name: "熊貓", role: "adult", group: "蟻團" }, { name: "虎鯨", role: "kid", group: "蟻團" }] },
-      { family: "山嵐家庭", members: [{ name: "山嵐", role: "adult", group: "蟻團" }, { name: "雪鴞", role: "adult", group: "蟻團" }, { name: "紫水晶", role: "kid", group: "蟻團" }, { name: "冰島馬", role: "kid", group: "蟻團" }] },
-      { family: "白鷺鷥家庭", members: [{ name: "白鷺鷥", role: "adult", group: "蟻團" }, { name: "水牛", role: "adult", group: "蟻團" }, { name: "麻雀", role: "kid", group: "蟻團" }] },
-      { family: "石虎家庭", members: [{ name: "石虎", role: "adult", group: "蟻團" }, { name: "美國短毛貓", role: "adult", group: "蟻團" }, { name: "小象", role: "kid", group: "蟻團" }] }
+    "天空小隊": [
+      { family: "大白熊家庭", members: [{ name: "大白熊", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "小白兔", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "樹懶", role: "adult", group: "鷹團", category: "S鷹育" }] },
+      { family: "日初家庭", members: [{ name: "日初", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "雪霽", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "晴天", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "海芋家庭", members: [{ name: "小白鯨", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "海芋", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "黑迪仔(菜名)", role: "adult", group: "蜂團", category: "S大蜂" }] },
+      { family: "哈士奇家庭", members: [{ name: "小花貓", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "水鹿", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "哈士奇", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "琥珀", role: "adult", group: "蟻團", category: "A蟻工" }] },
+      { family: "棉花家庭", members: [{ name: "小羊", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "棉花", role: "adult", group: "鹿團", category: "D鹿工" }] },
+      { family: "蚰蜒家庭", members: [{ name: "玄武", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "朱雀", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "蚰蜒", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "霓虹", role: "adult", group: "鹿團", category: "D鹿工" }] },
+      { family: "彩虹河家庭", members: [{ name: "香魚", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "彩虹河", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "紫藤花", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "林㹭家庭", members: [{ name: "地鼠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "林㹭", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "革龜", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "烏頭翁", role: "adult", group: "蟻團", category: "A蟻工" }] },
+      { family: "冬陽家庭", members: [{ name: "冬陽", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "冰晶石", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "蒼霞", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "曙光", role: "kid", group: "蟻團", category: "S小小蟻" }] },
+      { family: "白喉文鳥家庭", members: [{ name: "小粉蝶", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "白喉文鳥", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "鍬形蟲", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "藍莓果", role: "adult", group: "鹿團", category: "S鹿育" }] },
+      { family: "榛果家庭", members: [{ name: "星兜", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "榛果", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "熊童子", role: "adult", group: "鹿團", category: "S大鹿" }] },
+      { family: "岩蘭草家庭", members: [{ name: "小雪兔", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "岩蘭草", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "神木", role: "adult", group: "蟻團", category: "S大蟻" }] },
+      { family: "野牛家庭", members: [{ name: "小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "柯爾鴨", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "野牛", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "薊罌粟", role: "adult", group: "蟻團", category: "S蟻育" }] },
+      { family: "地瓜葉家庭", members: [{ name: "玉米", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "地瓜葉", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "茼蒿家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "茼蒿", role: "adult", group: "蟻團", category: "A蟻工" }] },
+      { family: "珊瑚家庭", members: [{ name: "珊瑚", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "蝴蝶魚", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "海馬", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "蝴蝶魚家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] },
+      { family: "折耳貓家庭", members: [{ name: "折耳貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "金吉拉", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "沙漠貓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "三花貓", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "蒼狼家庭", members: [{ name: "蒼狼", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "雛菊", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "山貓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "山豬", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "啄木鳥家庭", members: [{ name: "啄木鳥", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "紅豆", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "山椒魚", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "草鴞", role: "kid", group: "蜂團", category: "B小蜂" }] }
+    ],
+    "花叢小隊": [
+      { family: "水家庭", members: [{ name: "太陽", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "水", role: "adult", group: "鷹團", category: "E大鷹" }] },
+      { family: "雨天家庭", members: [{ name: "雨天", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "獅子", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "藍喉鴝", role: "adult", group: "其他", category: "L複式團長" }] },
+      { family: "月亮家庭", members: [{ name: "土星", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "月亮", role: "adult", group: "鷹團", category: "S鷹育" }] },
+      { family: "天竺葵家庭", members: [{ name: "天竺葵", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "水黽", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "白紋巨竹節蟲", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "藍腹鷴家庭", members: [{ name: "紅鶴", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "藍腹鷴", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "藪貓", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "水蜜桃家庭", members: [{ name: "小蘋果", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "小櫻桃", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "水蜜桃", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "西瓜", role: "adult", group: "蜂團", category: "S蜂育" }] },
+      { family: "漩渦家庭", members: [{ name: "小貝殼", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "小刺蝟", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "漩渦", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "檸檬桉", role: "adult", group: "蟻團", category: "A蟻工" }] },
+      { family: "黑貓家庭", members: [{ name: "小蜜蜂", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "黑貓", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "暴龍", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "瓢蟲", role: "adult", group: "蟻團", category: "S蟻育" }] },
+      { family: "非洲象家庭", members: [{ name: "大翅鯨", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "非洲象", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "眼鏡王蛇", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "雕鴞", role: "adult", group: "蜂團", category: "S大蜂" }] },
+      { family: "柿林家庭", members: [{ name: "柿林", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "栗米", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "橙芮", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "橙茸", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "招潮蟹家庭", members: [{ name: "招潮蟹", role: "adult", group: "蟻團", category: "S蟻育" }, { name: "珍珠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "梧桐", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "紫蘇", role: "adult", group: "蟻團", category: "A蟻工" }] },
+      { family: "兔子家庭", members: [{ name: "兔子", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "恬恬", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "螃蟹", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "貓咪", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "水蓮家庭", members: [{ name: "水蓮", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "海豚", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "茉莉花家庭", members: [{ name: "小白花", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "布偶貓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "茉莉花", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "變色龍", role: "adult", group: "蜂團", category: "B蜂工" }] },
+      { family: "海浪家庭", members: [{ name: "海浪", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "長頸鹿", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "長耳鴞家庭", members: [{ name: "長耳鴞", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "螢火蟲", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "紫蝶", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] },
+      { family: "黃腹琉璃家庭", members: [{ name: "黃腹琉璃", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "台灣藍鵲", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "黃山雀", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "金煌家庭", members: [{ name: "金煌", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "愛文", role: "kid", group: "鹿團", category: "D小鹿" }] },
+      { family: "接骨莓家庭", members: [{ name: "接骨莓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "劍齒虎", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "虎貓", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "接骨莓家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] }
+    ],
+    "99團": [
+      { family: "甜菜根家庭", members: [{ name: "甜菜根", role: "adult", group: "其他", category: "畢業" }] }
     ]
   };
 
   const STATUS_OPTIONS = ["出席", "請假", "早退", "晚到"];
+
+  /* ------------------------------------------------------------
+     用餐費用規則：
+     - 小小蟻（S小小蟻）：免費 $0
+     - 小蟻／小蜂（A小蟻、B小蜂）：團膳小孩價 $60
+     - 其他所有人（大人 + 小鹿D小鹿 + 小鷹E小鷹）：團膳大人價 $110
+     ------------------------------------------------------------ */
+  function getMealFee(category) {
+    if (category === "S小小蟻") return 0;
+    if (category === "A小蟻" || category === "B小蜂") return 60;
+    return 110;
+  }
 
   /* ============================================================
      2. 抓取 HTML 元素
@@ -366,7 +387,7 @@
     memberList.innerHTML = "";
     memberStatus = {};
     memberMeal = {};
-    memberInfo = {}; // 記錄每位成員的 role（大人/小孩）和 group（蟻/蜂/鹿/鷹/其他）
+    memberInfo = {}; // 記錄每位成員的 role（大人/小孩）、group（蟻/蜂/鹿/鷹/其他）、category（精確分類代碼）
 
     if (!selectedName) {
       memberList.innerHTML = "<div style='color:#999;font-size:14px;'>請選擇 Step2 的自然名</div>";
@@ -385,7 +406,7 @@
       // 預設登記人自己是「出席」，其他家人（含小孩）先不預設，讓登記人自己選
       memberStatus[name] = name === selectedName ? "出席" : "";
       memberMeal[name] = false;
-      memberInfo[name] = { role: member.role, group: member.group };
+      memberInfo[name] = { role: member.role, group: member.group, category: member.category };
 
       const card = document.createElement("div");
       card.className = "member-card";
@@ -403,7 +424,7 @@
         <div class="status-group">${statusButtonsHtml}</div>
         <label class="meal-row">
           <input type="checkbox" onchange="setMeal('${name}', this.checked)">
-          需要用餐
+          需要用餐（$${getMealFee(member.category)}）
         </label>
       `;
       memberList.appendChild(card);
@@ -453,19 +474,26 @@
     const now = new Date().toISOString();
 
     // 把 memberStatus / memberMeal / memberInfo 組成一筆一筆的紀錄
-    const records = Object.keys(memberStatus).map(name => ({
-      time: now,
-      team: selectedTeam,
-      family: currentFamilyName,
-      registrant: nameSelect.value, // 這筆是由誰登記的
-      name: name,
-      role: memberInfo[name].role,   // adult / kid
-      group: memberInfo[name].group, // 蟻團/蜂團/鹿團/鷹團/其他
-      status: memberStatus[name],    // 出席/請假/早退/晚到
-      meal: memberMeal[name] ? "是" : "否",
-      plate: plate,
-      remark: remark
-    }));
+    const records = Object.keys(memberStatus).map(name => {
+      const fee = memberMeal[name] ? getMealFee(memberInfo[name].category) : 0;
+      return {
+        time: now,
+        team: selectedTeam,
+        family: currentFamilyName,
+        registrant: nameSelect.value, // 這筆是由誰登記的
+        name: name,
+        role: memberInfo[name].role,   // adult / kid
+        group: memberInfo[name].group, // 蟻團/蜂團/鹿團/鷹團/其他
+        category: memberInfo[name].category, // 精確分類代碼，例如 S大鹿、D小鹿、E小鷹
+        status: memberStatus[name],    // 出席/請假/早退/晚到
+        meal: memberMeal[name] ? "是" : "否",
+        mealFee: fee,                  // 這個人的用餐費用（沒勾用餐就是 0）
+        plate: plate,
+        remark: remark
+      };
+    });
+
+    const totalMealFee = records.reduce((sum, r) => sum + r.mealFee, 0);
 
     fetch(APPS_SCRIPT_URL, {
       method: "POST",
@@ -476,6 +504,7 @@
       console.error("送出失敗：", err);
     });
 
+    document.getElementById("mealFeeAmount").textContent = "$" + totalMealFee;
     document.getElementById("resultOverlay").classList.add("show");
   }
 
