@@ -17,7 +17,7 @@
   }
   .card {
     background: #ffffff;
-    max-width: 480px;
+    max-width: 560px;
     width: 100%;
     border-radius: 12px;
     padding: 28px 24px;
@@ -85,6 +85,21 @@
   .status-btn.selected[data-status="請假"] { background: #b0472e; color: #fff; border-color: #b0472e; }
   .status-btn.selected[data-status="早退"] { background: #c98a1b; color: #fff; border-color: #c98a1b; }
   .status-btn.selected[data-status="晚到"] { background: #3b6ee0; color: #fff; border-color: #3b6ee0; }
+  .status-btn.selected[data-status="分團"] { background: #7b4a83; color: #fff; border-color: #7b4a83; }
+
+  /* 早退／晚到時出現的時間備註欄 */
+  .time-note {
+    display: none;
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border: 1px solid #cfd9cf;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fffdf5;
+  }
+  .time-note.show { display: block; }
+  .time-note.error { border-color: #b0472e; background: #fdf0ed; }
 
   .meal-row {
     display: flex;
@@ -249,7 +264,7 @@
       { family: "薰衣草家庭", members: [{ name: "小魚兒", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "薰衣草", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "鐵牛", role: "adult", group: "蜂團", category: "S蜂育" }] },
       { family: "四葉草家庭", members: [{ name: "小草莓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "四葉草", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "滿天星", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "蒲公英", role: "kid", group: "鹿團", category: "D小鹿" }] },
       { family: "北極星家庭", members: [{ name: "天竺鼠", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "北極星", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "苦楝", role: "adult", group: "蜂團", category: "B蜂工" }] },
-      { family: "狐獴 家庭", members: [{ name: "狐獴 ", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "花椰菜", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "高麗菜", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "寒流", role: "kid", group: "蜂團", category: "B小蜂" }] },
+      { family: "狐獴 家庭", members: [{ name: "狐獴", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "花椰菜", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "高麗菜", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "寒流", role: "kid", group: "蜂團", category: "B小蜂" }] },
       { family: "荔枝家庭", members: [{ name: "松鼠猴", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "浣熊", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "荔枝", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "稻穗", role: "adult", group: "鹿團", category: "S鹿育" }] },
       { family: "黑熊家庭", members: [{ name: "水豚君", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "海豹", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "黑熊", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "樹蛙", role: "adult", group: "鹿團", category: "S鹿育" }] },
       { family: "夕霧草家庭", members: [{ name: "夕霧草", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "奶油兔", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "曼赤肯貓", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "暹羅貓", role: "adult", group: "蟻團", category: "S大蟻" }] },
@@ -305,7 +320,7 @@
     ]
   };
 
-  const STATUS_OPTIONS = ["出席", "請假", "早退", "晚到"];
+  const STATUS_OPTIONS = ["出席", "請假", "早退", "晚到", "分團"];
 
   /* ------------------------------------------------------------
      用餐費用規則：
@@ -332,6 +347,8 @@
   let memberStatus = {};
   // 存放每位成員是否需要用餐，例如 { "海狗": true, "星星": false }
   let memberMeal = {};
+  // 存放每位成員早退／晚到的時間備註，例如 { "星星": "15:30" }
+  let memberTimeNote = {};
   // 存放每位成員的身份與團別，例如 { "海狗": { role: "adult", group: "蟻團" } }
   let memberInfo = {};
 
@@ -387,6 +404,7 @@
     memberList.innerHTML = "";
     memberStatus = {};
     memberMeal = {};
+    memberTimeNote = {};
     memberInfo = {}; // 記錄每位成員的 role（大人/小孩）、group（蟻/蜂/鹿/鷹/其他）、category（精確分類代碼）
 
     if (!selectedName) {
@@ -403,9 +421,11 @@
 
     myFamily.members.forEach(member => {
       const name = member.name;
-      // 預設登記人自己是「出席」，其他家人（含小孩）先不預設，讓登記人自己選
-      memberStatus[name] = name === selectedName ? "出席" : "";
+      // 所有人（含登記人本人）一開始都不預設狀態，由使用者自己點選
+      memberStatus[name] = "";
+      // 一開始不勾選用餐；點選「出席」才會自動帶動勾選
       memberMeal[name] = false;
+      memberTimeNote[name] = "";
       memberInfo[name] = { role: member.role, group: member.group, category: member.category };
 
       const card = document.createElement("div");
@@ -422,8 +442,12 @@
       card.innerHTML = `
         <div class="member-name">${name}</div>
         <div class="status-group">${statusButtonsHtml}</div>
+        <input type="text" class="time-note"
+               oninput="setTimeNote('${name}', this.value, this)">
         <label class="meal-row">
-          <input type="checkbox" onchange="setMeal('${name}', this.checked)">
+          <input type="checkbox" class="meal-checkbox"
+                 ${memberMeal[name] ? "checked" : ""}
+                 onchange="setMeal('${name}', this.checked)">
           需要用餐（$${getMealFee(member.category)}）
         </label>
       `;
@@ -437,10 +461,41 @@
     const group = btnEl.parentElement;
     group.querySelectorAll(".status-btn").forEach(b => b.classList.remove("selected"));
     btnEl.classList.add("selected");
+
+    const card = btnEl.closest(".member-card");
+    const mealBox = card.querySelector(".meal-checkbox");
+    const timeNote = card.querySelector(".time-note");
+
+    // 選「出席」「早退」「晚到」→ 自動勾選需要用餐（使用者可再手動取消）
+    // 選「請假」或「分團」→ 自動取消用餐，避免誤收餐費
+    if (status === "出席" || status === "早退" || status === "晚到") {
+      memberMeal[name] = true;
+      mealBox.checked = true;
+    } else if (status === "請假" || status === "分團") {
+      memberMeal[name] = false;
+      mealBox.checked = false;
+    }
+
+    // 選「早退」或「晚到」→ 顯示時間備註欄；其他狀態則隱藏並清空
+    if (status === "早退" || status === "晚到") {
+      timeNote.placeholder = status === "早退"
+        ? "請填寫預計早退時間，例如 15:30"
+        : "請填寫預計抵達時間，例如 10:30";
+      timeNote.classList.add("show");
+    } else {
+      timeNote.classList.remove("show", "error");
+      timeNote.value = "";
+      memberTimeNote[name] = "";
+    }
   }
 
   function setMeal(name, checked) {
     memberMeal[name] = checked;
+  }
+
+  function setTimeNote(name, value, inputEl) {
+    memberTimeNote[name] = value;
+    if (inputEl && value.trim()) inputEl.classList.remove("error");
   }
 
   /* ============================================================
@@ -469,6 +524,23 @@
       return;
     }
 
+    // 早退、晚到必須填寫時間，沒填不能送出
+    const missingTime = Object.keys(memberStatus).filter(name =>
+      (memberStatus[name] === "早退" || memberStatus[name] === "晚到") &&
+      !(memberTimeNote[name] || "").trim()
+    );
+    if (missingTime.length > 0) {
+      document.querySelectorAll(".member-card").forEach(card => {
+        const n = card.querySelector(".member-name").textContent;
+        if (missingTime.includes(n)) card.querySelector(".time-note").classList.add("error");
+      });
+      alert("請填寫時間：" + missingTime.map(n => `「${n}」的${memberStatus[n]}時間`).join("、"));
+      const firstCard = [...document.querySelectorAll(".member-card")]
+        .find(c => missingTime.includes(c.querySelector(".member-name").textContent));
+      if (firstCard) firstCard.querySelector(".time-note").focus();
+      return;
+    }
+
     const plate = document.getElementById("plateInput").value;
     const remark = document.getElementById("remarkInput").value;
     const now = new Date().toISOString();
@@ -486,6 +558,7 @@
         status: memberStatus[name],    // 出席/請假/早退/晚到
         meal: memberMeal[name] ? "是" : "否",
         mealFee: fee,                  // 這個人的用餐費用（沒勾用餐就是 0）
+        timeNote: memberTimeNote[name] || "", // 早退／晚到的時間備註
         plate: plate,
         remark: remark
       };
