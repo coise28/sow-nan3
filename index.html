@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>115-116南三團出席登記</title>
+<title>荒野南三團出席登記</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -24,7 +24,7 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   }
   h1 { font-size: 22px; margin: 0 0 4px; color: #2f5d3a; }
-  .subtitle { font-size: 13px; color: #6b7d6b; margin-bottom: 24px; }
+  .subtitle { font-size: 16px; color: #be1d2b; margin-bottom: 24px; margin-left: 30px}
   .step { margin-bottom: 22px; }
   .step label.step-title {
     display: block;
@@ -200,13 +200,13 @@
   <!-- Step4：整體備註（車牌、額外留言） -->
   <div class="step">
     <label class="step-title">Step4. 其他資訊：</label>
-    <div class="note-field">
+    <div class="note-field" style="display:none;">
       <label for="plateInput">車牌號碼（若自行開車前往，方便安排停車）</label>
       <input type="text" id="plateInput" placeholder="例如 ABC-1234（無則留白）">
     </div>
     <div class="note-field">
       <label for="remarkInput">備註留言（選填）</label>
-      <input type="text" id="remarkInput" placeholder="例如：素食、過敏原、其他需求">
+      <input type="text" id="remarkInput" placeholder="例如：素食、其他需求">
     </div>
   </div>
 
@@ -235,7 +235,6 @@
   // Step2 只會列出 role 為 adult 的人；Step3 仍會列出整個家庭（含小孩）
   const TEAM_DATA = {
     "大地小隊": [
-      { family: "水草家庭", members: [{ name: "空氣家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "水草", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "空氣", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "琉璃貓", role: "kid", group: "鹿團", category: "D小鹿" }] },
       { family: "小寒家庭", members: [{ name: "小雪", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "小寒", role: "adult", group: "鷹團", category: "E大鷹" }, { name: "小滿", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "夏至", role: "adult", group: "蜂團", category: "B蜂工" }] },
       { family: "寄居蟹家庭", members: [{ name: "粉紅兔", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "寄居蟹", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "椰子蟹", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "鯨鯊", role: "kid", group: "鹿團", category: "D小鹿" }] },
       { family: "北朱雀家庭", members: [{ name: "北朱雀", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "紅雁", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "擬刺尾鯛", role: "kid", group: "蜂團", category: "B小蜂" }] },
@@ -251,7 +250,6 @@
       { family: "黃鸝家庭", members: [{ name: "美洲豹", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "黃鸝", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "蜂鷹", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "藍鯨", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "鸚鵡", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "熊貓家庭", members: [{ name: "熊貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "虎鯨", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "山嵐家庭", members: [{ name: "山嵐", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "雪鴞", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "紫水晶", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "冰島馬", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "白鷺鷥家庭", members: [{ name: "白鷺鷥", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "水牛", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "麻雀", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "石虎家庭", members: [{ name: "石虎", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "美國短毛貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "小象", role: "kid", group: "蟻團", category: "A小蟻" }] }
     ],
     "草原小隊": [
@@ -271,7 +269,6 @@
       { family: "許願藤家庭", members: [{ name: "許願藤家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "白海豚", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "地震龍", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "迷迭香", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "許願藤", role: "adult", group: "蟻團", category: "S蟻育" }, { name: "獅子魚", role: "adult", group: "蜂團", category: "S大蜂" }] },
       { family: "康乃馨家庭", members: [{ name: "康乃馨", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "海王星", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "大刀螳螂", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "幽靈螳螂", role: "kid", group: "蟻團", category: "S小小蟻" }] },
       { family: "海狗家庭", members: [{ name: "海狗", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "桂圓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "星星", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "豹紋守宮家庭", members: [{ name: "豹紋守宮", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "小丑魚", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "羊駝", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "五色鳥家庭", members: [{ name: "五色鳥", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "大黃蜂", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "花栗鼠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "紅松鼠", role: "kid", group: "蟻團", category: "A小蟻" }] }
     ],
     "天空小隊": [
@@ -312,7 +309,6 @@
       { family: "海浪家庭", members: [{ name: "海浪", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "長頸鹿", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "長耳鴞家庭", members: [{ name: "長耳鴞", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "螢火蟲", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "紫蝶", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] },
       { family: "黃腹琉璃家庭", members: [{ name: "黃腹琉璃", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "台灣藍鵲", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "黃山雀", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "金煌家庭", members: [{ name: "金煌", role: "adult", group: "鹿團", category: "S大鹿" }, { name: "愛文", role: "kid", group: "鹿團", category: "D小鹿" }] },
       { family: "接骨莓家庭", members: [{ name: "接骨莓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "劍齒虎", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "虎貓", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "接骨莓家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] }
     ],
     "99團": [
@@ -330,8 +326,8 @@
      ------------------------------------------------------------ */
   function getMealFee(category) {
     if (category === "S小小蟻") return 0;
-    if (category === "A小蟻" || category === "B小蜂") return 60;
-    return 110;
+    if (category === "A小蟻" || category === "B小蜂") return 90;
+    return 90;
   }
 
   /* ============================================================
