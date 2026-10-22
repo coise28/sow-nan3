@@ -130,6 +130,7 @@
     margin-top: 8px;
   }
   button.submit-btn:hover { background: #244a2e; }
+  button.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .overlay {
     display: none;
@@ -210,7 +211,7 @@
     </div>
   </div>
 
-  <button class="submit-btn" onclick="submitForm()">送出出席登記</button>
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">送出出席登記</button>
 </div>
 
 <div class="overlay" id="resultOverlay">
@@ -507,7 +508,11 @@
   // 把這裡換成你自己部署後拿到的網址
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzL4ySa-_Cf1uueyqG6oPA7xokUPFEUCTtkpVm3ZIqdYLp3RJpuiG__ruxn8XK_KEt/exec";
 
-  function submitForm() {
+  let submitting = false; // 送出中，避免連點重複送出
+
+  async function submitForm() {
+    if (submitting) return;
+
     if (!selectedTeam || !nameSelect.value) {
       alert("請先完成 Step1 和 Step2");
       return;
@@ -562,17 +567,37 @@
 
     const totalMealFee = records.reduce((sum, r) => sum + r.mealFee, 0);
 
-    fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ records: records })
-    }).catch(err => {
-      console.error("送出失敗：", err);
-    });
+    // 送出中：停用按鈕、顯示「送出中…」，防止連點
+    submitting = true;
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "送出中…";
 
-    document.getElementById("mealFeeAmount").textContent = "$" + totalMealFee;
-    document.getElementById("resultOverlay").classList.add("show");
+    // 20 秒沒回應就視為失敗
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ records: records }),
+        signal: controller.signal
+      });
+      const result = await res.json();
+      if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
+
+      document.getElementById("mealFeeAmount").textContent = "$" + totalMealFee;
+      document.getElementById("resultOverlay").classList.add("show");
+    } catch (err) {
+      console.error("送出失敗：", err);
+      alert("送出失敗，或無法確認是否已成功送出，請稍後再按一次「送出出席登記」。\n（重新送出只會覆蓋您先前的登記，不會重複計算）");
+    } finally {
+      clearTimeout(timer);
+      submitting = false;
+      btn.disabled = false;
+      btn.textContent = "送出出席登記";
+    }
   }
 
   function closeModal() {
