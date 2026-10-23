@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>荒野南三團出席登記</title>
+<title>115-116南三團出席登記</title>
 <style>
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-    background: #eef3ec;
-    color: #223322;
+    background: #fffbee;
+    color: #3d4a47;
     display: flex;
     justify-content: center;
     padding: 32px 16px;
@@ -23,7 +23,7 @@
     padding: 28px 24px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   }
-  h1 { font-size: 22px; margin: 0 0 4px; color: #2f5d3a; }
+  h1 { font-size: 22px; margin: 0 0 4px; color: #3fa493; }
   .subtitle { font-size: 16px; color: #be1d2b; margin-bottom: 24px; margin-left: 30px}
   .step { margin-bottom: 22px; }
   .step label.step-title {
@@ -34,32 +34,32 @@
   select, input[type="text"] {
     width: 100%;
     padding: 10px;
-    border: 1px solid #cfd9cf;
+    border: 1px solid #d6e6e0;
     border-radius: 8px;
     font-size: 15px;
-    background: #fbfdf9;
+    background: #fffefa;
   }
 
   /* Step1 小隊藥丸按鈕 */
   .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
   .pill {
     padding: 10px 18px;
-    border: 1px solid #cfd9cf;
+    border: 1px solid #d6e6e0;
     border-radius: 999px;
-    background: #fbfdf9;
+    background: #fffefa;
     cursor: pointer;
     font-size: 14px;
     user-select: none;
   }
-  .pill.selected { background: #3b6ee0; border-color: #3b6ee0; color: #fff; }
+  .pill.selected { background: #7f9ccc; border-color: #7f9ccc; color: #fff; }
 
   /* Step3 每位成員的出席狀態卡片 */
   .member-list { display: flex; flex-direction: column; gap: 12px; }
   .member-card {
-    border: 1px solid #cfd9cf;
+    border: 1px solid #d6e6e0;
     border-radius: 10px;
     padding: 12px 14px;
-    background: #fbfdf9;
+    background: #fffefa;
   }
   .member-name { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
 
@@ -74,18 +74,18 @@
     min-width: 64px;
     text-align: center;
     padding: 6px 4px;
-    border: 1px solid #cfd9cf;
+    border: 1px solid #d6e6e0;
     border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
     background: #fff;
   }
   /* 四種狀態各自的選中顏色 */
-  .status-btn.selected[data-status="出席"] { background: #2f5d3a; color: #fff; border-color: #2f5d3a; }
-  .status-btn.selected[data-status="請假"] { background: #b0472e; color: #fff; border-color: #b0472e; }
-  .status-btn.selected[data-status="早退"] { background: #c98a1b; color: #fff; border-color: #c98a1b; }
-  .status-btn.selected[data-status="晚到"] { background: #3b6ee0; color: #fff; border-color: #3b6ee0; }
-  .status-btn.selected[data-status="分團"] { background: #7b4a83; color: #fff; border-color: #7b4a83; }
+  .status-btn.selected[data-status="出席"] { background: #3fa493; color: #fff; border-color: #3fa493; }
+  .status-btn.selected[data-status="請假"] { background: #e0836b; color: #fff; border-color: #e0836b; }
+  .status-btn.selected[data-status="早退"] { background: #d9b43a; color: #fff; border-color: #d9b43a; }
+  .status-btn.selected[data-status="晚到"] { background: #7f9ccc; color: #fff; border-color: #7f9ccc; }
+  .status-btn.selected[data-status="分團"] { background: #a58bc7; color: #fff; border-color: #a58bc7; }
 
   /* 早退／晚到時出現的時間備註欄 */
   .time-note {
@@ -93,13 +93,13 @@
     width: 100%;
     padding: 8px 10px;
     margin-bottom: 8px;
-    border: 1px solid #cfd9cf;
+    border: 1px solid #d6e6e0;
     border-radius: 8px;
     font-size: 14px;
     background: #fffdf5;
   }
   .time-note.show { display: block; }
-  .time-note.error { border-color: #b0472e; background: #fdf0ed; }
+  .time-note.error { border-color: #e0836b; background: #fdeee9; }
 
   .meal-row {
     display: flex;
@@ -114,14 +114,69 @@
   .note-field label {
     display: block;
     font-size: 13px;
-    color: #445544;
+    color: #4f5f5b;
     margin-bottom: 4px;
   }
+
+    /* Step5 / 送出後的登記明細卡片 */
+  .summary-card {
+    background: #e9f5f1;
+    border-radius: 12px;
+    padding: 10px 18px;
+    text-align: left;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+    padding: 5px 0;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: #4f5f5b;
+  }
+  /* 名字與金額之間加一條淡淡的點線引導視線 */
+  .summary-row span:first-child { flex: 1; display: flex; align-items: baseline; }
+  .summary-row span:first-child::after {
+    content: "";
+    flex: 1;
+    margin: 0 8px;
+    border-bottom: 1px dotted rgba(79, 95, 91, 0.3);
+    transform: translateY(-3px);
+  }
+  .summary-fee { font-weight: 600; white-space: nowrap; }
+  .summary-fee.none { font-weight: 400; color: #8fa39e; }
+  .summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px solid #d6e6e0;
+    margin-top: 6px;
+    padding-top: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    color: #2f4b46;
+  }
+  .summary-total span:last-child { font-size: 24px; }
+  /* 請假、分團：淡灰綠底色＋淡色文字（和「不用餐」同色系） */
+  .summary-row[data-status="請假"],
+  .summary-row[data-status="分團"] {
+    margin: 0 -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 0;
+    background: #dbe7e3;
+    color: #8fa39e;
+  }
+
+  .summary-empty { font-size: 14px; color: #8fa39e; }
+  .modal { width: 100%; max-height: 85vh; overflow-y: auto; }
+  .modal .summary-card { margin: 12px 0; }
 
   button.submit-btn {
     width: 100%;
     padding: 12px;
-    background: #2f5d3a;
+    background: #3fa493;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -129,7 +184,7 @@
     cursor: pointer;
     margin-top: 8px;
   }
-  button.submit-btn:hover { background: #244a2e; }
+  button.submit-btn:hover { background: #2f8a7a; }
   button.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .overlay {
@@ -154,17 +209,24 @@
     line-height: 1.6;
     margin: 12px 0 16px;
   }
+  .modal .total-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0 6px;
+  }
   .modal .amount {
     font-size: 28px;
     font-weight: 700;
-    color: #2f5d3a;
-    margin: 6px 0;
+    color: #3fa493;
+    margin: 0;
   }
   .modal button {
     padding: 8px 24px;
     border-radius: 8px;
     border: none;
-    background: #2f5d3a;
+    background: #3fa493;
     color: #fff;
     cursor: pointer;
   }
@@ -173,8 +235,8 @@
 <body>
 
 <div class="card">
-  <h1>🍀 12月出席調查</h1>
-  <div class="subtitle">團集會日期：12/13(日）洲南鹽場 8:30-16:00 </div>
+  <h1>🍀 12月出席調查  </h1>
+  <div class="subtitle">團集會日期：12月13日  洲南鹽場 8:30-16:00</div>
 
   <!-- Step1：選小隊 -->
   <div class="step">
@@ -207,8 +269,14 @@
     </div>
     <div class="note-field">
       <label for="remarkInput">備註留言（選填）</label>
-      <input type="text" id="remarkInput" placeholder="例如：素食、其他需求">
+      <input type="text" id="remarkInput" placeholder="例如：簡述請假事由、餐點需求">
     </div>
+  </div>
+
+  <!-- Step5：確認登記內容與用餐費用 -->
+  <div class="step">
+    <label class="step-title">Step5. 確認您的登記內容：</label>
+    <div class="summary-card" id="summaryBody"></div>
   </div>
 
   <button class="submit-btn" id="submitBtn" onclick="submitForm()">送出出席登記</button>
@@ -218,8 +286,11 @@
   <div class="modal">
     <div>🎉</div>
     <div>您的出席登記已成功送出</div>
-    <div>本次用餐費用總計：</div>
-    <div class="amount" id="mealFeeAmount">$0</div>
+  <div class="summary-card" id="modalSummary"></div>
+    <div class="total-row">
+      <span>本次用餐費用總計：</span>
+      <span class="amount" id="mealFeeAmount">$0</span>
+    </div>
     <div class="note">
       如需更改出席狀態，重新填寫送出即可
     </div>
@@ -249,9 +320,7 @@
       { family: "海洋家庭", members: [{ name: "柴犬", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "海洋", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "樹林", role: "adult", group: "蜂團", category: "S大蜂" }] },
       { family: "加州紅杉家庭", members: [{ name: "加州紅杉", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "艾草", role: "adult", group: "蜂團", category: "S蜂育" }, { name: "紫丁香", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "紫羅蘭", role: "kid", group: "蜂團", category: "B小蜂" }] },
       { family: "黃鸝家庭", members: [{ name: "美洲豹", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "黃鸝", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "蜂鷹", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "藍鯨", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "鸚鵡", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "熊貓家庭", members: [{ name: "熊貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "虎鯨", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "山嵐家庭", members: [{ name: "山嵐", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "雪鴞", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "紫水晶", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "冰島馬", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "石虎家庭", members: [{ name: "石虎", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "美國短毛貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "小象", role: "kid", group: "蟻團", category: "A小蟻" }] }
+      { family: "山嵐家庭", members: [{ name: "山嵐", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "雪鴞", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "紫水晶", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "冰島馬", role: "kid", group: "蟻團", category: "A小蟻" }] }
     ],
     "草原小隊": [
       { family: "狐狸家庭", members: [{ name: "白狐", role: "kid", group: "鷹團", category: "E小鷹" }, { name: "狐狸", role: "adult", group: "鷹團", category: "S鷹育" }] },
@@ -270,6 +339,7 @@
       { family: "許願藤家庭", members: [{ name: "許願藤家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "白海豚", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "地震龍", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "迷迭香", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "許願藤", role: "adult", group: "蟻團", category: "S蟻育" }, { name: "獅子魚", role: "adult", group: "蜂團", category: "S大蜂" }] },
       { family: "康乃馨家庭", members: [{ name: "康乃馨", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "海王星", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "大刀螳螂", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "幽靈螳螂", role: "kid", group: "蟻團", category: "S小小蟻" }] },
       { family: "海狗家庭", members: [{ name: "海狗", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "桂圓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "星星", role: "kid", group: "蟻團", category: "A小蟻" }] },
+      { family: "豹紋守宮家庭", members: [{ name: "豹紋守宮", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "小丑魚", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "羊駝", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "五色鳥家庭", members: [{ name: "五色鳥", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "大黃蜂", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "花栗鼠", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "紅松鼠", role: "kid", group: "蟻團", category: "A小蟻" }] }
     ],
     "天空小隊": [
@@ -508,6 +578,7 @@
   // 把這裡換成你自己部署後拿到的網址
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzL4ySa-_Cf1uueyqG6oPA7xokUPFEUCTtkpVm3ZIqdYLp3RJpuiG__ruxn8XK_KEt/exec";
 
+  
   let submitting = false; // 送出中，避免連點重複送出
 
   async function submitForm() {
@@ -587,6 +658,7 @@
       const result = await res.json();
       if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
 
+      renderSummary(document.getElementById("modalSummary"), false); // 回應視窗也顯示登記明細
       document.getElementById("mealFeeAmount").textContent = "$" + totalMealFee;
       document.getElementById("resultOverlay").classList.add("show");
     } catch (err) {
@@ -599,6 +671,60 @@
       btn.textContent = "送出出席登記";
     }
   }
+
+    /* ============================================================
+     7. Step5：登記明細（每位成員的狀態與用餐費用，即時更新）
+     ============================================================ */
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // targetEl：要顯示在哪裡；showTotal：是否顯示最下面的「應付用餐費用」
+  function renderSummary(targetEl, showTotal = true) {
+    targetEl = targetEl || document.getElementById("summaryBody");
+    const names = Object.keys(memberStatus);
+
+    if (!selectedTeam || !nameSelect.value || names.length === 0) {
+      targetEl.innerHTML =
+        '<div class="summary-empty">請先完成 Step1～Step3，這裡會顯示您的登記內容與用餐費用</div>';
+      return;
+    }
+
+    let total = 0;
+    const rows = names.map(name => {
+      const status = memberStatus[name];
+      const note = (memberTimeNote[name] || "").trim();
+      const label = status ? status + (note ? "・" + note : "") : "尚未選擇";
+
+      let right = "不用餐";
+      let cls = "none";
+      if (memberMeal[name]) {
+        const fee = getMealFee(memberInfo[name].category);
+        total += fee;
+        right = "$" + fee;
+        cls = "";
+      }
+      return `<div class="summary-row" data-status="${escapeHtml(status)}">
+        <span>${escapeHtml(name)}（${escapeHtml(label)}）</span>
+        <span class="summary-fee ${cls}">${right}</span>
+      </div>`;
+    }).join("");
+
+    let html = rows;
+    if (showTotal) {
+      html += `<div class="summary-total"><span>應付用餐費用</span><span>$${total}</span></div>`;
+    }
+    targetEl.innerHTML = html;
+  }
+
+  // 使用者每次點選、輸入、勾選，都重新整理一次明細
+  memberList.addEventListener("click", () => renderSummary());
+  memberList.addEventListener("input", () => renderSummary());
+  memberList.addEventListener("change", () => renderSummary());
+  nameSelect.addEventListener("change", () => renderSummary());
+  teamPillsEl.addEventListener("click", () => renderSummary());
+  renderSummary();
 
   function closeModal() {
     document.getElementById("resultOverlay").classList.remove("show");
