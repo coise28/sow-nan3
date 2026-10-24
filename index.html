@@ -644,9 +644,9 @@
     btn.disabled = true;
     btn.textContent = "送出中…";
 
-    // 20 秒沒回應就視為失敗
+    // 8 秒沒回應就視為失敗
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
+    const timer = setTimeout(() => controller.abort(), 8000);
 
     try {
       const res = await fetch(APPS_SCRIPT_URL, {
