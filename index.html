@@ -108,6 +108,7 @@
     font-size: 14px;
   }
   .meal-row input { width: auto; }
+  .meal-row:has(input:disabled) { color: #8fa39e; }
 
   /* Step4 備註欄（車牌、整體備註） */
   .note-field { margin-bottom: 14px; }
@@ -186,6 +187,9 @@
   }
   button.submit-btn:hover { background: #2f8a7a; }
   button.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  button.submit-btn.done,
+  button.submit-btn.done:hover { background: #6fb59f; }
+  button.submit-btn.done:disabled { opacity: 1; cursor: default; }
 
   .overlay {
     display: none;
@@ -355,7 +359,7 @@
       { family: "白喉文鳥家庭", members: [{ name: "小粉蝶", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "白喉文鳥", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "鍬形蟲", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "藍莓果", role: "adult", group: "鹿團", category: "S鹿育" }] },
       { family: "榛果家庭", members: [{ name: "星兜", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "榛果", role: "adult", group: "鹿團", category: "D鹿工" }, { name: "熊童子", role: "adult", group: "鹿團", category: "S大鹿" }] },
       { family: "岩蘭草家庭", members: [{ name: "小雪兔", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "岩蘭草", role: "adult", group: "蟻團", category: "A蟻工" }, { name: "神木", role: "adult", group: "蟻團", category: "S大蟻" }] },
-      { family: "野牛家庭", members: [{ name: "小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "柯爾鴨", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "野牛", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "薊罌粟", role: "adult", group: "蟻團", category: "S蟻育" }] },
+      { family: "野牛家庭", members: [{ name: "野牛家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "柯爾鴨", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "野牛", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "薊罌粟", role: "adult", group: "蟻團", category: "S蟻育" }] },
       { family: "地瓜葉家庭", members: [{ name: "玉米", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "地瓜葉", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "茼蒿家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }, { name: "茼蒿", role: "adult", group: "蟻團", category: "A蟻工" }] },
       { family: "珊瑚家庭", members: [{ name: "珊瑚", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "蝴蝶魚", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "海馬", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "蝴蝶魚家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] },
       { family: "折耳貓家庭", members: [{ name: "折耳貓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "金吉拉", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "沙漠貓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "三花貓", role: "kid", group: "蟻團", category: "A小蟻" }] },
@@ -378,7 +382,7 @@
       { family: "水蓮家庭", members: [{ name: "水蓮", role: "adult", group: "蜂團", category: "B蜂工" }, { name: "海豚", role: "kid", group: "蜂團", category: "B小蜂" }] },
       { family: "茉莉花家庭", members: [{ name: "小白花", role: "kid", group: "鹿團", category: "D小鹿" }, { name: "布偶貓", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "茉莉花", role: "adult", group: "鹿團", category: "S鹿育" }, { name: "變色龍", role: "adult", group: "蜂團", category: "B蜂工" }] },
       { family: "海浪家庭", members: [{ name: "海浪", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "長頸鹿", role: "kid", group: "蟻團", category: "A小蟻" }] },
-      { family: "長耳鴞家庭", members: [{ name: "長耳鴞", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "螢火蟲", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "紫蝶", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] },
+      { family: "長耳鴞家庭", members: [{ name: "長耳鴞", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "螢火蟲", role: "adult", group: "蜂團", category: "S大蜂" }, { name: "紫蝶", role: "kid", group: "蜂團", category: "B小蜂" }, { name: "長耳鴞家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] },
       { family: "黃腹琉璃家庭", members: [{ name: "黃腹琉璃", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "台灣藍鵲", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "黃山雀", role: "kid", group: "蟻團", category: "A小蟻" }] },
       { family: "接骨莓家庭", members: [{ name: "接骨莓", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "劍齒虎", role: "adult", group: "蟻團", category: "S大蟻" }, { name: "虎貓", role: "kid", group: "蟻團", category: "A小蟻" }, { name: "接骨莓家小小蟻", role: "kid", group: "蟻團", category: "S小小蟻" }] }
     ],
@@ -542,6 +546,8 @@
       memberMeal[name] = false;
       mealBox.checked = false;
     }
+    // 選「請假」或「分團」→ 鎖住用餐勾選，改選其他狀態才解鎖
+    mealBox.disabled = status === "請假" || status === "分團";
 
     // 選「早退」或「晚到」→ 顯示時間備註欄；其他狀態則隱藏並清空
     if (status === "早退" || status === "晚到") {
@@ -642,12 +648,13 @@
     submitting = true;
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
-    btn.textContent = "送出中…";
+    btn.textContent = "送出中，約需 5~10 秒…";
 
     // 15 秒沒回應就視為失敗
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
 
+    let ok = false; // 這次是否成功送出
     try {
       const res = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
@@ -657,6 +664,7 @@
       });
       const result = await res.json();
       if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
+      ok = true;
 
       renderSummary(document.getElementById("modalSummary"), false); // 回應視窗也顯示登記明細
       document.getElementById("mealFeeAmount").textContent = "$" + totalMealFee;
@@ -667,6 +675,25 @@
     } finally {
       clearTimeout(timer);
       submitting = false;
+      if (ok) {
+        // 送出成功：按鈕改成「填寫完成」並鎖住，修改內容後才會解鎖
+        btn.disabled = true;
+        btn.textContent = "填寫完成 ✓";
+        btn.classList.add("done");
+      } else {
+        btn.disabled = false;
+        btn.textContent = "送出出席登記";
+        btn.classList.remove("done");
+      }
+    }
+  }
+
+  // 成功後如果又修改了內容，按鈕改回「送出出席登記」，提醒需要重新送出
+  function resetSubmitBtn() {
+    if (submitting) return;
+    const btn = document.getElementById("submitBtn");
+    if (btn.classList.contains("done")) {
+      btn.classList.remove("done");
       btn.disabled = false;
       btn.textContent = "送出出席登記";
     }
@@ -719,11 +746,13 @@
   }
 
   // 使用者每次點選、輸入、勾選，都重新整理一次明細
-  memberList.addEventListener("click", () => renderSummary());
-  memberList.addEventListener("input", () => renderSummary());
-  memberList.addEventListener("change", () => renderSummary());
-  nameSelect.addEventListener("change", () => renderSummary());
-  teamPillsEl.addEventListener("click", () => renderSummary());
+  memberList.addEventListener("click", () => { renderSummary(); resetSubmitBtn(); });
+  memberList.addEventListener("input", () => { renderSummary(); resetSubmitBtn(); });
+  memberList.addEventListener("change", () => { renderSummary(); resetSubmitBtn(); });
+  nameSelect.addEventListener("change", () => { renderSummary(); resetSubmitBtn(); });
+  teamPillsEl.addEventListener("click", () => { renderSummary(); resetSubmitBtn(); });
+  document.getElementById("plateInput").addEventListener("input", resetSubmitBtn);
+  document.getElementById("remarkInput").addEventListener("input", resetSubmitBtn);
   renderSummary();
 
   function closeModal() {
