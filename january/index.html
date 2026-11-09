@@ -921,6 +921,9 @@
     // 把這裡換成你自己部署後拿到的網址
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyogdHKOd1yRbqzglVpDZL_i1sRR-1iq69zucNT1gIeuZund9AmvWvM0WxTrKCrw905/exec";
 
+    // 試算表分頁名稱：資料會寫到「1月-原始資料」、「1月-費用統計」
+    const SHEET_MONTH = "1月";
+
 
     let submitting = false; // 送出中，避免連點重複送出
 
@@ -1008,7 +1011,7 @@
         const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ records: records }),
+          body: JSON.stringify({ month: SHEET_MONTH, records: records }),
           signal: controller.signal
         });
         const result = await res.json();
@@ -1123,3 +1126,4 @@
 </body>
 
 </html>
+
