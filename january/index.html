@@ -92,6 +92,16 @@
       color: #fff;
     }
 
+    .progress-hint {
+      font-size: 13px;
+      color: #8fa39e;
+      margin-top: 6px;
+    }
+
+    .progress-hint:empty {
+      display: none;
+    }
+
     /* Step3 每位成員的出席狀態卡片 */
     .member-list {
       display: flex;
@@ -460,6 +470,7 @@
     <div class="step">
       <label class="step-title">Step1. 請選擇您所屬的小隊：</label>
       <div class="pill-group" id="teamPills"></div>
+      <div class="progress-hint" id="progressHint">讀取填寫進度中…</div>
     </div>
 
     <!-- Step2：選自然名（登記人本人） -->
@@ -742,19 +753,31 @@
        4. Step2：列出這個小隊底下所有人的自然名
           （出席登記不用分大人小孩，全部人都可以是登記人）
        ============================================================ */
+    //    查到填寫進度後，分成「尚未填寫」「已填寫（可重新填寫）」兩組；
+    //    以家庭為單位：家裡任何一人填過，全家的大人都算已填寫
     function populateNameOptions(teamName) {
       const families = TEAM_DATA[teamName] || [];
-      nameSelect.innerHTML = "<option value=''>請選擇...</option>";
+      const todo = [], done = [];
       families.forEach(fam => {
-        fam.members
-          .filter(m => m.role === "adult")   // 只有大人可以當登記人
-          .forEach(adult => {
-            const opt = document.createElement("option");
-            opt.value = adult.name;
-            opt.textContent = adult.name;
-            nameSelect.appendChild(opt);
-          });
+        const adults = fam.members.filter(m => m.role === "adult"); // 只有大人可以當登記人
+        (isFamilyDone(fam) ? done : todo).push(...adults);
       });
+
+      nameSelect.innerHTML = "<option value=''>請選擇...</option>";
+      // 還沒查到進度（或查詢失敗）：照原本方式列出全部名字
+      if (!registeredNames) {
+        todo.forEach(a => nameSelect.appendChild(new Option(a.name, a.name)));
+        return;
+      }
+      const addGroup = (label, list, mark) => {
+        if (!list.length) return;
+        const group = document.createElement("optgroup");
+        group.label = label;
+        list.forEach(a => group.appendChild(new Option(mark + a.name, a.name)));
+        nameSelect.appendChild(group);
+      };
+      addGroup("尚未填寫", todo, "");
+      addGroup("已填寫（可重新填寫）", done, "✓ ");
     }
 
     /* ============================================================
@@ -921,6 +944,46 @@
     // 試算表分頁名稱：資料會寫到「1月-原始資料」、「1月-費用統計」
     const SHEET_MONTH = "1月";
 
+    /* ============================================================
+       填寫進度：打開表單時向 Apps Script 查詢已填寫的自然名，
+       Step2 名單分成尚未填寫／已填寫
+       查詢失敗也沒關係，表單照原本方式使用
+       ============================================================ */
+    let registeredNames = null; // 已填寫的自然名（Set）；null 代表還沒查到
+
+    function isFamilyDone(fam) {
+      return !!registeredNames && fam.members.some(m => registeredNames.has(m.name));
+    }
+
+    function refreshProgress() {
+      // 已選好小隊的話，重排 Step2 名單，但保留目前選到的名字
+      if (selectedTeam) {
+        const current = nameSelect.value;
+        populateNameOptions(selectedTeam);
+        nameSelect.value = current;
+      }
+    }
+
+    async function loadProgress() {
+      const hint = document.getElementById("progressHint");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        const res = await fetch(APPS_SCRIPT_URL + "?month=" + encodeURIComponent(SHEET_MONTH),
+          { signal: controller.signal });
+        const result = await res.json();
+        if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
+        registeredNames = new Set(result.names || []);
+        refreshProgress();
+      } catch (err) {
+        console.warn("讀取填寫進度失敗，改為顯示完整名單：", err);
+      } finally {
+        clearTimeout(timer);
+        hint.textContent = "";
+      }
+    }
+    loadProgress();
+
 
     let submitting = false; // 送出中，避免連點重複送出
 
@@ -1014,6 +1077,12 @@
         const result = await res.json();
         if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
         ok = true;
+
+        // 剛送出的這一家也算已填寫，不用重新整理頁面就會更新
+        if (registeredNames) {
+          Object.keys(memberStatus).forEach(n => registeredNames.add(n));
+          refreshProgress();
+        }
 
         renderSummary(document.getElementById("modalSummary"), false); // 回應視窗也顯示登記明細
         document.getElementById("mealFeeAmount").textContent = "$" + totalFee;
