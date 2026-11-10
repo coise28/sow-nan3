@@ -479,7 +479,8 @@
     </div>
 
     <!-- Step4：住宿房型（以家庭為單位，2人房／4人房／4人房＋床 擇一） -->
-    <div class="step" id="roomStep">
+    <!-- 一開始先隱藏，有成員需要住宿時才出現 -->
+    <div class="step" id="roomStep" style="display:none;">
       <label class="step-title">Step4. 家庭住宿房型：</label>
       <ul class="room-desc" id="roomDesc"></ul>
       <div class="room-hint" id="roomHint">請選擇房型（最終住宿房型以育成會安排為主！！）</div>
@@ -699,6 +700,7 @@
       });
     }
     initRoomPills();
+    updateRoomUI(); // 一開始沒人住宿：隱藏 Step4、後面步驟編號往前補
 
     function hasLodging() {
       return Object.values(memberLodging).some(v => v);
@@ -719,17 +721,12 @@
       if (!lodging) roomPillsEl.classList.remove("error");
       roomPillsEl.querySelectorAll(".room-pill").forEach(p =>
         p.classList.toggle("selected", p.dataset.room === selectedRoom));
-      roomHintEl.textContent = lodging
-        ? "請選擇一種房型（以家庭為單位，後續以育成會安排為主）"
-        : "有成員需要住宿時，請選擇一種房型（後續以育成會安排為主）";
+      roomHintEl.textContent = "請選擇房型（最終住宿房型以育成會安排為主！！）";
 
-      // 全家都請假／分團 → 隱藏 Step4，後面的步驟編號往前補
-      const statuses = Object.values(memberStatus);
-      const allAbsent = statuses.length > 0 &&
-        statuses.every(s => s === "請假" || s === "分團");
-      document.getElementById("roomStep").style.display = allAbsent ? "none" : "";
+      // 沒有任何成員需要住宿 → 隱藏 Step4，後面的步驟編號往前補
+      document.getElementById("roomStep").style.display = lodging ? "" : "none";
       document.querySelectorAll(".step-no").forEach(el => {
-        el.textContent = Number(el.dataset.base) - (allAbsent ? 1 : 0);
+        el.textContent = Number(el.dataset.base) - (lodging ? 0 : 1);
       });
     }
 
@@ -1126,4 +1123,3 @@
 </body>
 
 </html>
-
