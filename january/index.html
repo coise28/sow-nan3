@@ -239,6 +239,30 @@
       line-height: 1.8;
     }
 
+    /* 選了 4人房才出現的拆房意願問題 */
+    .split-box {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border-left: 3px solid #3fa493;
+      background: #f4faf8;
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+    }
+
+    .split-box .split-question {
+      margin-bottom: 8px;
+    }
+
+    .split-box .split-fee {
+      font-size: 13px;
+      color: #be1d2b;
+    }
+
+    .split-box.error {
+      border-left-color: #e0836b;
+      background: #fdeee9;
+    }
+
     .room-desc b {
       color: #3fa493;
     }
@@ -496,6 +520,7 @@
       <ul class="room-desc" id="roomDesc"></ul>
       <div class="room-hint" id="roomHint">請選擇房型（最終住宿房型以育成會安排為主！！）</div>
       <div class="pill-group room-group disabled" id="roomPills"></div>
+      <div class="split-box" id="splitBox" style="display:none;"></div>
     </div>
 
     <!-- Step5：整體備註（車牌、額外留言） -->
@@ -648,8 +673,15 @@
     // Step4 房型說明：desc 顯示在價格前面，note 顯示在價格後面（沒有就留空）
     const ROOM_OPTIONS = [
       { type: "2人房", price: 1750, desc: "2小床", note: "70間" },
-      { type: "4人房", price: ROOM_4_PRICE, desc: "和式房", note: "28間" },
+      // askSplit：選了這個房型，要再回答是否願意拆開成 2 間 2人房
+      { type: "4人房", price: ROOM_4_PRICE, desc: "和式房", note: "28間", askSplit: true },
       { type: "4人房＋床", price: ROOM_4_PRICE + EXTRA_BED_PRICE, desc: "", note: "只有加棉被，無法加床墊" }
+    ];
+    // 拆房意願的選項：label 顯示在按鈕上，value 會接在房型後面寫進試算表
+    // 例如試算表房型欄會是「4人房・有意願拆成2人房」
+    const SPLIT_OPTIONS = [
+      { label: "願意", value: "有意願拆成2人房" },
+      { label: "不願意", value: "無意願拆" }
     ];
     function getRoomFee(roomType) {
       const room = ROOM_OPTIONS.find(r => r.type === roomType);
@@ -677,8 +709,11 @@
     let memberLodging = {};
     // 這個家庭選的住宿房型（"2人房"／"4人房"），未選為空字串
     let selectedRoom = "";
+    // 選 4人房時的拆房意願（"有意願拆成2人房"／"無意願拆"），未選為空字串
+    let splitChoice = "";
 
     const roomPillsEl = document.getElementById("roomPills");
+    const splitBoxEl = document.getElementById("splitBox");
     const roomHintEl = document.getElementById("roomHint");
 
     /* ============================================================
@@ -709,6 +744,29 @@
         pill.onclick = () => selectRoom(room.type);
         roomPillsEl.appendChild(pill);
       });
+
+      // 拆房意願問題（選了 4人房才會顯示）
+      const twinPrice = ROOM_OPTIONS.find(r => r.type === "2人房").price;
+      splitBoxEl.innerHTML = `
+        <div class="split-question">若 4人房不夠，是否願意拆開成 2 間 2人房？
+          <span class="split-fee">（拆開後費用為 2 × $${twinPrice} = $${twinPrice * 2}）</span>
+        </div>
+        <div class="pill-group">
+          ${SPLIT_OPTIONS.map(o => `<div class="room-pill split-pill" data-split="${o.value}">${o.label}</div>`).join("")}
+        </div>`;
+      splitBoxEl.querySelectorAll(".split-pill").forEach(pill => {
+        pill.onclick = () => { splitChoice = pill.dataset.split; updateRoomUI(); };
+      });
+    }
+
+    function needsSplitAnswer() {
+      const room = ROOM_OPTIONS.find(r => r.type === selectedRoom);
+      return !!(room && room.askSplit);
+    }
+
+    // 寫進試算表、顯示在明細的房型名稱，例如「4人房・有意願拆成2人房」
+    function roomTypeText() {
+      return selectedRoom + (needsSplitAnswer() && splitChoice ? "・" + splitChoice : "");
     }
     initRoomPills();
     updateRoomUI(); // 一開始沒人住宿：隱藏 Step4、後面步驟編號往前補
@@ -734,6 +792,14 @@
         p.classList.toggle("selected", p.dataset.room === selectedRoom));
       roomHintEl.textContent = "請選擇房型（最終住宿房型以育成會安排為主！！）";
 
+      // 選了 4人房才顯示拆房意願；換成其他房型就清掉答案
+      const askSplit = needsSplitAnswer();
+      if (!askSplit) splitChoice = "";
+      splitBoxEl.style.display = askSplit ? "" : "none";
+      if (!askSplit || splitChoice) splitBoxEl.classList.remove("error");
+      splitBoxEl.querySelectorAll(".split-pill").forEach(p =>
+        p.classList.toggle("selected", p.dataset.split === splitChoice));
+
       // 沒有任何成員需要住宿 → 隱藏 Step4，後面的步驟編號往前補
       document.getElementById("roomStep").style.display = lodging ? "" : "none";
       document.querySelectorAll(".step-no").forEach(el => {
@@ -747,6 +813,14 @@
       pillEl.classList.add("selected");
       populateNameOptions(teamName);
       memberList.innerHTML = "<div style='color:#999;font-size:14px;'>請選擇 Step2 的自然名</div>";
+      // 換小隊：清掉上一家的狀態、用餐、住宿和房型，Step4 也跟著隱藏
+      memberStatus = {};
+      memberMeal = {};
+      memberTimeNote = {};
+      memberInfo = {};
+      memberLodging = {};
+      selectedRoom = "";
+      updateRoomUI();
     }
 
     /* ============================================================
@@ -1026,6 +1100,13 @@
         alert("請在 Step4 選擇住宿房型（" + ROOM_OPTIONS.map(r => r.type).join("、") + "）");
         return;
       }
+      // 選了 4人房就必須回答拆房意願
+      if (hasLodging() && needsSplitAnswer() && !splitChoice) {
+        splitBoxEl.classList.add("error");
+        splitBoxEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        alert("請在 Step4 回答：若 4人房不夠，是否願意拆開成 2 間 2人房？");
+        return;
+      }
       const roomFee = hasLodging() ? getRoomFee(selectedRoom) : 0;
 
       const plate = document.getElementById("plateInput").value;
@@ -1047,7 +1128,7 @@
           mealFee: fee,                  // 這個人的用餐費用（沒勾用餐就是 0）
           timeNote: memberTimeNote[name] || "", // 早退／晚到的時間備註
           lodging: memberLodging[name] ? "是" : "否",
-          roomType: hasLodging() ? selectedRoom : "", // 家庭房型，每筆都帶，方便篩選
+          roomType: hasLodging() ? roomTypeText() : "", // 家庭房型（含拆房意願），每筆都帶，方便篩選
           roomFee: i === 0 ? roomFee : 0,           // 房費以家庭計，只記在第一筆，加總才不會重複
           plate: plate,
           remark: remark
@@ -1163,7 +1244,7 @@
         const roomFee = selectedRoom ? getRoomFee(selectedRoom) : 0;
         total += roomFee;
         html += `<div class="summary-row">
-        <span>住宿房型（${selectedRoom ? escapeHtml(selectedRoom) : "尚未選擇"}）</span>
+        <span>住宿房型（${selectedRoom ? escapeHtml(roomTypeText()) : "尚未選擇"}）</span>
         <span class="summary-fee ${selectedRoom ? "" : "none"}">${selectedRoom ? "$" + roomFee : "—"}</span>
       </div>`;
       }
@@ -1180,6 +1261,7 @@
     nameSelect.addEventListener("change", () => { renderSummary(); resetSubmitBtn(); });
     teamPillsEl.addEventListener("click", () => { renderSummary(); resetSubmitBtn(); });
     roomPillsEl.addEventListener("click", () => { renderSummary(); resetSubmitBtn(); });
+    splitBoxEl.addEventListener("click", () => { renderSummary(); resetSubmitBtn(); });
     document.getElementById("plateInput").addEventListener("input", resetSubmitBtn);
     document.getElementById("remarkInput").addEventListener("input", resetSubmitBtn);
     renderSummary();
