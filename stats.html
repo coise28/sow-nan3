@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>南三團出席統計</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: #fffbee;
+      color: #3d4a47;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      max-width: 720px;
+      width: 100%;
+      border-radius: 12px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 6px;
+      color: #3fa493;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #8fa39e;
+      margin-bottom: 20px;
+    }
+
+    .toolbar button {
+      padding: 4px 12px;
+      border: 1px solid #d6e6e0;
+      border-radius: 999px;
+      background: #fffefa;
+      color: #3d4a47;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .toolbar button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    /* 上方各狀態人數 */
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tile {
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #f4faf8;
+    }
+
+    .tile .label {
+      font-size: 13px;
+    }
+
+    .tile .num {
+      font-size: 24px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tile.total {
+      background: #3fa493;
+      color: #fff;
+    }
+
+    /* 各狀態名單：一次只顯示一份，顏色和表單的狀態按鈕一致 */
+    .section {
+      margin-bottom: 22px;
+    }
+
+    .section h2 {
+      font-size: 17px;
+      margin: 0 0 8px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #f4faf8;
+    }
+
+    .section[data-status="請假"] h2,
+    .tile[data-status="請假"] { background: #f8ddd5; color: #a3452c; }
+    .section[data-status="早退"] h2,
+    .tile[data-status="早退"] { background: #f6ecc7; color: #8a6d0e; }
+    .section[data-status="晚到"] h2,
+    .tile[data-status="晚到"] { background: #dde6f4; color: #3d5f96; }
+
+    /* 人數格就是分頁按鈕：點了下方只顯示那份名單，再點一次收起 */
+    .tile.tab {
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .tile.tab.active {
+      border-color: currentColor;
+    }
+
+    .tile.tab .label::after {
+      content: " ▾";
+      font-size: 11px;
+    }
+
+    .tile.tab.active .label::after {
+      content: " ▴";
+    }
+
+    .tile.empty {
+      opacity: 0.6;
+    }
+
+    .hint {
+      text-align: center;
+      font-size: 14px;
+      color: #8fa39e;
+      padding: 12px 0;
+    }
+
+    .group {
+      margin: 0 0 10px 4px;
+    }
+
+    .group-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .cat {
+      display: flex;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 2px 0 2px 8px;
+      border-left: 2px solid #e3eeea;
+    }
+
+    .cat-name {
+      flex: 0 0 92px;
+      color: #4f5f5b;
+      white-space: nowrap;
+    }
+
+    .cat-name b {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cat-people {
+      flex: 1;
+    }
+
+    /* 每個名字不從中間斷開，換行只發生在名字之間 */
+    .person {
+      white-space: nowrap;
+    }
+
+    .empty {
+      font-size: 14px;
+      color: #8fa39e;
+      margin-left: 4px;
+    }
+
+    .message {
+      text-align: center;
+      color: #8fa39e;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1 id="title">🏕️ 出席統計</h1>
+    <div class="toolbar">
+      <span id="updated">讀取中…</span>
+      <button id="refreshBtn" onclick="loadStats()">重新整理</button>
+    </div>
+    <div id="content"><div class="message">讀取中…</div></div>
+  </div>
+
+  <script>
+    /* ============================================================
+       即時出席統計：每次打開都向 Apps Script 要最新資料
+       放在網站最外層，每個月的表單共用這一頁：
+         1月以後：stats.html?month=1月  → 讀「1月-原始資料」
+         12月：   stats.html?label=12月 → 讀「原始資料」（12月分頁沒有月份），標題顯示 12月
+       ============================================================ */
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyogdHKOd1yRbqzglVpDZL_i1sRR-1iq69zucNT1gIeuZund9AmvWvM0WxTrKCrw905/exec";
+    const params = new URLSearchParams(location.search);
+    const MONTH = params.get("month") || "";           // 試算表分頁用的月份
+    const LABEL = params.get("label") || MONTH;        // 標題顯示的月份（兩個都沒有時不顯示月份）
+
+    // 顯示順序：狀態、團別、分類代碼
+    // 只顯示這幾種狀態（分團不列出）
+    const STATUS_ORDER = ["出席", "早退", "晚到", "請假"];
+    // 每團依序：（小小蟻）→ 大 → 小 → 育 → 工
+    const GROUP_ORDER = {
+      "蟻團": ["S小小蟻", "S大蟻", "A小蟻", "S蟻育", "A蟻工"],
+      "蜂團": ["S大蜂", "B小蜂", "S蜂育", "B蜂工"],
+      "鹿團": ["S大鹿", "D小鹿", "S鹿育", "D鹿工"],
+      "鷹團": ["E大鷹", "E小鷹", "S鷹育", "E鷹工"],
+      "其他": ["L複式團長", "S育成會長", "畢業"]
+    };
+
+    document.getElementById("title").textContent = `🏕️ ${LABEL}出席統計`;
+    document.title = `${LABEL}出席統計`;
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    // 分類顯示名稱改寫（試算表裡的分類代碼不變，只改畫面上的字）
+    const CATEGORY_RENAME = { "畢業": "99團" };
+
+    // 分類名稱去掉前面的英文代碼：S小小蟻 → 小小蟻、L複式團長 → 複式團長
+    function catLabel(cat) {
+      cat = String(cat || "");
+      return CATEGORY_RENAME[cat] || cat.replace(/^[A-Za-z]+/, "") || "未分類";
+    }
+
+    // 依固定順序排序，不在清單裡的排最後
+    function ordered(keys, order) {
+      return [...keys].sort((a, b) => {
+        const ia = order.indexOf(a), ib = order.indexOf(b);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      });
+    }
+
+    function render(people) {
+      people = people.filter(p => STATUS_ORDER.includes(p.status));
+      const byStatus = {};
+      people.forEach(p => (byStatus[p.status] = byStatus[p.status] || []).push(p));
+      const count = s => (byStatus[s] || []).length;
+      const attending = count("出席") + count("早退") + count("晚到");
+
+      // 重新整理後，原本選的名單如果已經沒人，就回到都不選
+      if (!count(selectedStatus)) selectedStatus = "";
+
+      // 上方人數：總出席（含早退、晚到）＋各狀態；有人的格子是分頁按鈕
+      let html = `<div class="tiles">
+        <div class="tile total"><div class="label">總出席人數</div><div class="num">${attending}</div></div>
+        ${STATUS_ORDER.map(s => `<div class="tile ${count(s) ? "tab" : "empty"}${s === selectedStatus ? " active" : ""}" data-status="${s}">
+          <div class="label">${s}</div><div class="num">${count(s)}</div></div>`).join("")}
+      </div>`;
+
+      if (!people.length) {
+        content.innerHTML = html + `<div class="message">目前還沒有人填寫</div>`;
+        return;
+      }
+      html += `<div class="hint"${selectedStatus ? " hidden" : ""}>點上方的人數，查看名單</div>`;
+
+      // 各狀態：依團別 → 分類代碼列出名單；早退、晚到在名字後面加時間
+      ordered(Object.keys(byStatus), STATUS_ORDER).forEach(status => {
+        const list = byStatus[status];
+        const byGroup = {};
+        list.forEach(p => {
+          const g = GROUP_ORDER[p.group] ? p.group : "其他";
+          ((byGroup[g] = byGroup[g] || {})[p.category] = byGroup[g][p.category] || []).push(p);
+        });
+
+        // 一開始都不顯示，點上方人數格才顯示那一份
+        html += `<div class="section" data-status="${escapeHtml(status)}"${status === selectedStatus ? "" : " hidden"}>
+          <h2>${escapeHtml(status)}　${list.length} 人</h2>`;
+        ordered(Object.keys(byGroup), Object.keys(GROUP_ORDER)).forEach(group => {
+          const cats = byGroup[group];
+          const groupTotal = Object.values(cats).reduce((n, arr) => n + arr.length, 0);
+          html += `<div class="group"><div class="group-title">${escapeHtml(group)}（${groupTotal}）</div>`;
+          ordered(Object.keys(cats), GROUP_ORDER[group] || []).forEach(cat => {
+            const names = cats[cat].map(p => `<span class="person">${escapeHtml(p.name)}`
+              + (p.timeNote ? `（${escapeHtml(p.timeNote)}）` : "") + "</span>").join("、");
+            html += `<div class="cat">
+              <span class="cat-name">${escapeHtml(catLabel(cat))} <b>${cats[cat].length}</b></span>
+              <span class="cat-people">${names}</span></div>`;
+          });
+          html += `</div>`;
+        });
+        html += `</div>`;
+      });
+
+      content.innerHTML = html;
+    }
+
+    // 目前選的名單（"出席"／"早退"／"晚到"／"請假"），空字串代表都不顯示
+    let selectedStatus = "";
+
+    // 點人數格：顯示那份名單；再點同一格就收起
+    function selectStatus(status) {
+      selectedStatus = selectedStatus === status ? "" : status;
+      content.querySelectorAll(".tile.tab").forEach(t =>
+        t.classList.toggle("active", t.dataset.status === selectedStatus));
+      content.querySelectorAll(".section").forEach(s => { s.hidden = s.dataset.status !== selectedStatus; });
+      content.querySelector(".hint").hidden = !!selectedStatus;
+    }
+
+    const content = document.getElementById("content");
+    const updatedEl = document.getElementById("updated");
+    const refreshBtn = document.getElementById("refreshBtn");
+    content.addEventListener("click", e => {
+      const tile = e.target.closest(".tile.tab");
+      if (tile) selectStatus(tile.dataset.status);
+    });
+
+    async function loadStats() {
+      refreshBtn.disabled = true;
+      updatedEl.textContent = "讀取中…";
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?action=stats&month=${encodeURIComponent(MONTH)}`,
+          { signal: controller.signal });
+        const result = await res.json();
+        if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
+        render(result.people || []);
+        updatedEl.textContent = "更新時間 " + new Date().toLocaleTimeString("zh-TW", { hour12: false });
+      } catch (err) {
+        console.error("讀取統計失敗：", err);
+        updatedEl.textContent = "讀取失敗，請按「重新整理」再試一次";
+        if (!content.querySelector(".tiles")) content.innerHTML = `<div class="message">讀取失敗</div>`;
+      } finally {
+        clearTimeout(timer);
+        refreshBtn.disabled = false;
+      }
+    }
+    loadStats();
+  </script>
+
+</body>
+</html>

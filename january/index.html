@@ -395,6 +395,15 @@
       margin: 12px 0;
     }
 
+    /* 表單最下方的試算表連結 */
+    .sheet-link {
+      display: block;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: #3fa493;
+    }
+
     button.submit-btn {
       width: 100%;
       padding: 12px;
@@ -543,6 +552,11 @@
     </div>
 
     <button class="submit-btn" id="submitBtn" onclick="submitForm()">送出出席登記</button>
+
+    <!-- 即時出席統計頁（stats.html 在網站最外層，所以路徑是 ../），在新分頁開啟 -->
+    <!-- 月份會由程式依 SHEET_MONTH 自動帶上 -->
+    <a class="sheet-link" id="statsLink" href="../stats.html"
+       target="_blank" rel="noopener">📊 查看目前登記狀況</a>
   </div>
 
   <div class="overlay" id="resultOverlay">
@@ -1017,6 +1031,7 @@
 
     // 試算表分頁名稱：資料會寫到「1月-原始資料」、「1月-費用統計」
     const SHEET_MONTH = "1月";
+    document.getElementById("statsLink").href = "../stats.html?month=" + encodeURIComponent(SHEET_MONTH);
 
     /* ============================================================
        填寫進度：打開表單時向 Apps Script 查詢已填寫的自然名，

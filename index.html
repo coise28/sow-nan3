@@ -174,6 +174,15 @@
   .modal { width: 100%; max-height: 85vh; overflow-y: auto; }
   .modal .summary-card { margin: 12px 0; }
 
+  /* 表單最下方的統計頁連結 */
+  .sheet-link {
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #3fa493;
+  }
+
   button.submit-btn {
     width: 100%;
     padding: 12px;
@@ -284,6 +293,9 @@
   </div>
 
   <button class="submit-btn" id="submitBtn" onclick="submitForm()">送出出席登記</button>
+
+  <!-- 即時出席統計頁：12月資料在「原始資料」分頁（沒有月份），只用 label 顯示標題 -->
+  <a class="sheet-link" href="stats.html?label=12月" target="_blank" rel="noopener">📊 查看目前登記狀況</a>
 </div>
 
 <div class="overlay" id="resultOverlay">
