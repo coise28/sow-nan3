@@ -106,6 +106,8 @@
     .tile[data-status="早退"] { background: #f6ecc7; color: #8a6d0e; }
     .section[data-status="晚到"] h2,
     .tile[data-status="晚到"] { background: #dde6f4; color: #3d5f96; }
+    .section[data-status="分團"] h2,
+    .tile[data-status="分團"] { background: #ececec; color: #5f5f5f; }
 
     /* 人數格就是分頁按鈕：點了下方只顯示那份名單，再點一次收起 */
     .tile.tab {
@@ -175,6 +177,48 @@
       white-space: nowrap;
     }
 
+    /* 出席名單的各團風琴：點團名展開／收起 */
+    .fold {
+      margin: 0 0 6px;
+      border-radius: 8px;
+      background: #fafcfb;
+      border: 1px solid #e8f0ed;
+    }
+
+    .fold summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fold summary::-webkit-details-marker { display: none; }
+
+    .fold summary::before {
+      content: "▸";
+      display: inline-block;
+      font-size: 12px;
+      color: #8fa39e;
+      transition: transform 0.15s;
+    }
+
+    .fold[open] summary::before { transform: rotate(90deg); }
+
+    .fold-count {
+      margin-left: auto;
+      font-weight: 400;
+      font-size: 13px;
+      color: #6b7c78;
+    }
+
+    .fold-body {
+      padding: 0 12px 10px 14px;
+    }
+
     .empty {
       font-size: 14px;
       color: #8fa39e;
@@ -212,8 +256,8 @@
     const LABEL = params.get("label") || MONTH;        // 標題顯示的月份（兩個都沒有時不顯示月份）
 
     // 顯示順序：狀態、團別、分類代碼
-    // 只顯示這幾種狀態（分團不列出）
-    const STATUS_ORDER = ["出席", "早退", "晚到", "請假"];
+    // 顯示這幾種狀態（分團也列出，但不算進總出席人數）
+    const STATUS_ORDER = ["出席", "早退", "晚到", "請假", "分團"];
     // 每團依序：（小小蟻）→ 大 → 小 → 育 → 工
     const GROUP_ORDER = {
       "蟻團": ["S小小蟻", "S大蟻", "A小蟻", "S蟻育", "A蟻工"],
@@ -286,15 +330,22 @@
         ordered(Object.keys(byGroup), Object.keys(GROUP_ORDER)).forEach(group => {
           const cats = byGroup[group];
           const groupTotal = Object.values(cats).reduce((n, arr) => n + arr.length, 0);
-          html += `<div class="group"><div class="group-title">${escapeHtml(group)}（${groupTotal}）</div>`;
+          let body = "";
           ordered(Object.keys(cats), GROUP_ORDER[group] || []).forEach(cat => {
             const names = cats[cat].map(p => `<span class="person">${escapeHtml(p.name)}`
               + (p.timeNote ? `（${escapeHtml(p.timeNote)}）` : "") + "</span>").join("、");
-            html += `<div class="cat">
+            body += `<div class="cat">
               <span class="cat-name">${escapeHtml(catLabel(cat))} <b>${cats[cat].length}</b></span>
               <span class="cat-people">${names}</span></div>`;
           });
-          html += `</div>`;
+          if (status === "出席") {
+            // 出席人多：各團做成風琴，點團名才展開
+            html += `<details class="fold" data-group="${escapeHtml(group)}"${openGroups.has(group) ? " open" : ""}>
+              <summary>${escapeHtml(group)}<span class="fold-count">${groupTotal}</span></summary>
+              <div class="fold-body">${body}</div></details>`;
+          } else {
+            html += `<div class="group"><div class="group-title">${escapeHtml(group)}（${groupTotal}）</div>${body}</div>`;
+          }
         });
         html += `</div>`;
       });
@@ -304,6 +355,8 @@
 
     // 目前選的名單（"出席"／"早退"／"晚到"／"請假"），空字串代表都不顯示
     let selectedStatus = "";
+    // 出席名單裡已展開的團（按「重新整理」後保持展開）
+    const openGroups = new Set();
 
     // 點人數格：顯示那份名單；再點同一格就收起
     function selectStatus(status) {
@@ -321,6 +374,12 @@
       const tile = e.target.closest(".tile.tab");
       if (tile) selectStatus(tile.dataset.status);
     });
+    // 記住哪幾團是展開的（toggle 事件不會往上傳，所以用 capture）
+    content.addEventListener("toggle", e => {
+      const group = e.target.dataset && e.target.dataset.group;
+      if (!group) return;
+      if (e.target.open) openGroups.add(group); else openGroups.delete(group);
+    }, true);
 
     async function loadStats() {
       refreshBtn.disabled = true;
