@@ -443,6 +443,13 @@
         content.innerHTML = `<div class="message">${escapeHtml(LABEL)}還沒有家庭填寫</div>`;
         return;
       }
+      // 12月的「餐費統計」金額欄標題是「合計」（不是「餐費合計」），當成餐費，不另外顯示成小標籤
+      families.forEach(f => {
+        if (f.mealFee === undefined && f.extra && f.extra["合計"] !== undefined) {
+          f.mealFee = num(f.extra["合計"]);
+          delete f.extra["合計"];
+        }
+      });
       // 12月沒有住宿：試算表沒有房費欄，就不顯示房費和住宿
       const hasLodging = families.some(f => f.roomFee !== undefined);
 
