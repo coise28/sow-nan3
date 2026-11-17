@@ -367,6 +367,7 @@
        新增月份時，在這裡加上「月份: 表單資料夾」 */
     const FORM_PAGES = { "12月": "./", "1月": "january/" };
     let familyOrder = null; // 自然名 → 在名單裡的順序
+    const memberCat = {};   // 自然名 → 分類代碼（表單名單裡的 category，例如 A小蟻）
 
     async function loadFamilyOrder() {
       if (familyOrder || !FORM_PAGES[LABEL]) return;
@@ -377,7 +378,7 @@
         familyOrder = {};
         let i = 0;
         Object.values(teamData).forEach(list => list.forEach(fam => {
-          fam.members.forEach(m => { familyOrder[m.name] = i; });
+          fam.members.forEach(m => { familyOrder[m.name] = i; memberCat[m.name] = m.category; });
           i++;
         }));
       } catch (err) {
@@ -464,6 +465,27 @@
       }
     }
 
+    // 用餐人數分大人／小孩（照表單名單的分類代碼）：
+    //   小孩＝小蟻、小蜂
+    //   小小蟻不收餐費，大人小孩都不算
+    //   其他（含小鹿、小鷹、各團大人）＝大人
+    // 後台沒回傳用餐名單時（或名單對不上），只顯示總人數
+    const KID_CATEGORIES = ["A小蟻", "B小蜂"];
+    const UNCOUNTED_CATEGORIES = ["S小小蟻"];
+
+    function mealSplit(families) {
+      const total = families.reduce((n, f) => n + num(f.mealCount), 0);
+      const names = families.flatMap(f => f.mealNames || []);
+      if (!names.length || !Object.keys(memberCat).length) return `用餐 ${total} 人`;
+      let adult = 0, kid = 0;
+      names.forEach(n => {
+        const cat = memberCat[n];
+        if (UNCOUNTED_CATEGORIES.includes(cat)) return;
+        if (KID_CATEGORIES.includes(cat)) kid++; else adult++;
+      });
+      return `大人 <b>${adult}</b> 人<br>小孩 <b>${kid}</b> 人`;
+    }
+
     /* ---------- 畫面 ---------- */
     function render(families) {
       if (!families.length) {
@@ -494,7 +516,7 @@
         <div class="tile total"><div class="label">全團費用合計</div><div class="num">${money(sum(families, "total"))}</div>
           <div class="sub">${families.length} 家庭</div></div>
         <div class="tile"><div class="label">餐費</div><div class="num">${money(sum(families, "mealFee"))}</div>
-          <div class="sub">用餐 ${sum(families, "mealCount")} 人</div></div>
+          <div class="sub">${mealSplit(families)}</div></div>
         ${hasLodging ? `<div class="tile"><div class="label">房費</div><div class="num">${money(sum(families, "roomFee"))}</div>
           <div class="sub">住宿 ${sum(families, "lodgingCount")} 人</div></div>` : ""}
       </div>`;
