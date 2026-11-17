@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 幹部專用，不讓搜尋引擎收錄 -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>南三團費用統計</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: #fffbee;
+      color: #3d4a47;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      max-width: 720px;
+      width: 100%;
+      border-radius: 12px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 6px;
+      color: #3fa493;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #8fa39e;
+      margin-bottom: 20px;
+    }
+
+    .toolbar button {
+      padding: 4px 12px;
+      border: 1px solid #d6e6e0;
+      border-radius: 999px;
+      background: #fffefa;
+      color: #3d4a47;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .toolbar button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .toolbar .logout {
+      margin-left: auto;
+    }
+
+    /* 密碼畫面 */
+    .login {
+      text-align: center;
+      padding: 24px 0 8px;
+    }
+
+    .login p {
+      margin: 0 0 14px;
+      font-size: 14px;
+      color: #6b7c78;
+    }
+
+    .login form {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .login input {
+      width: 220px;
+      max-width: 100%;
+      padding: 10px 14px;
+      font-size: 16px;
+      border: 1px solid #d6e6e0;
+      border-radius: 999px;
+      outline: none;
+    }
+
+    .login input:focus {
+      border-color: #3fa493;
+    }
+
+    .login button {
+      padding: 10px 20px;
+      font-size: 15px;
+      border: none;
+      border-radius: 999px;
+      background: #3fa493;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .login button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .login .error {
+      color: #be1d2b;
+      font-size: 14px;
+      margin-top: 12px;
+      min-height: 1.4em;
+    }
+
+    /* 上方總計 */
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tile {
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #f4faf8;
+    }
+
+    .tile .label {
+      font-size: 13px;
+    }
+
+    .tile .num {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tile .sub {
+      font-size: 12px;
+      color: #6b7c78;
+    }
+
+    .tile.total {
+      background: #3fa493;
+      color: #fff;
+    }
+
+    .tile.total .sub {
+      color: #e3f4ef;
+    }
+
+    /* 各小隊：花叢＝粉紅、天空＝藍、草原＝綠、大地＝土黃（和試算表同色） */
+    .team {
+      margin-bottom: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--team-border);
+    }
+
+    /* 小隊顏色（切換按鈕和小隊區塊共用） */
+    :where(.team, .team-switch button) { --team-bg: #eeeeee; --team-border: #dddddd; --team-text: #555555; }
+    [data-team="花叢小隊"] { --team-bg: #fbe1ea; --team-border: #f3c6d5; --team-text: #a3456a; }
+    [data-team="天空小隊"] { --team-bg: #dcebfa; --team-border: #bcd6f2; --team-text: #34649a; }
+    [data-team="草原小隊"] { --team-bg: #e2f2d9; --team-border: #c6e3b6; --team-text: #457a2c; }
+    [data-team="大地小隊"] { --team-bg: #f3e6d3; --team-border: #e3cfae; --team-text: #87602a; }
+
+    /* 花叢｜天空｜草原｜大地 切換：一次只看一個小隊 */
+    .team-switch {
+      display: flex;
+      border: 1px solid #d6e6e0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .team-switch button {
+      flex: 1;
+      border: none;
+      border-left: 1px solid #d6e6e0;
+      background: #fffefa;
+      color: #3d4a47;
+      font-size: 15px;
+      padding: 8px 4px;
+      cursor: pointer;
+    }
+
+    .team-switch button:first-child {
+      border-left: none;
+    }
+
+    .team-switch button.on {
+      background: var(--team-bg);
+      color: var(--team-text);
+      font-weight: 700;
+    }
+
+    .team-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--team-bg);
+      color: var(--team-text);
+    }
+
+    .team .empty-team {
+      padding: 16px 14px;
+      font-size: 14px;
+      color: #8fa39e;
+      text-align: center;
+    }
+
+    .team-head .name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .team-head .count {
+      font-size: 13px;
+    }
+
+    .team-head .sum {
+      margin-left: auto;
+      font-size: 17px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .family {
+      padding: 10px 14px;
+      border-top: 1px solid #eef3f1;
+    }
+
+    .fam-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .fam-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .fam-total {
+      margin-left: auto;
+      font-weight: 700;
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fam-detail {
+      font-size: 13px;
+      color: #6b7c78;
+      margin-top: 2px;
+      line-height: 1.6;
+    }
+
+    .fam-detail .item {
+      white-space: nowrap;
+    }
+
+    .fam-extra {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      font-size: 12px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: #f4faf8;
+      color: #4f5f5b;
+    }
+
+    .message {
+      text-align: center;
+      color: #8fa39e;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1 id="title">💰 費用統計</h1>
+    <div class="toolbar" id="toolbar" hidden>
+      <span id="updated"></span>
+      <button id="refreshBtn" type="button">重新整理</button>
+      <button class="logout" id="logoutBtn" type="button">登出</button>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    /* ============================================================
+       幹部專用：各家庭費用統計（依小隊 花叢 → 天空 → 草原 → 大地）
+       網址：fees.html?month=1月  → 讀「1月-費用統計」
+             fees.html?label=12月 → 讀「餐費統計」（12月分頁沒有月份，只有餐費）
+       需要密碼：密碼只存在 Apps Script 的指令碼屬性 FEE_PASSWORD，
+       網頁裡沒有密碼，資料要密碼正確才會從後台傳過來。
+       ============================================================ */
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyogdHKOd1yRbqzglVpDZL_i1sRR-1iq69zucNT1gIeuZund9AmvWvM0WxTrKCrw905/exec";
+    const params = new URLSearchParams(location.search);
+    // 有 label 沒 month 是 12月（試算表分頁沒有月份）；兩個都沒有時預設 1月
+    const MONTH = params.get("month") ?? (params.get("label") ? "" : "1月"); // 試算表分頁用的月份
+    const LABEL = params.get("label") || MONTH;                              // 標題顯示的月份
+    const TEAM_ORDER = ["花叢小隊", "天空小隊", "草原小隊", "大地小隊"];
+    // 只記在這個分頁，關掉分頁就要重新輸入
+    const PW_KEY = "feePassword";
+
+    document.getElementById("title").textContent = `💰 ${LABEL}費用統計`;
+    document.title = `${LABEL}費用統計`;
+
+    const content = document.getElementById("content");
+    const toolbar = document.getElementById("toolbar");
+    const updatedEl = document.getElementById("updated");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    // 房型只顯示房型本身，不顯示拆房意願：「4人房・有意願拆成2人房」→「4人房」
+    const roomLabel = t => String(t).split("・")[0];
+
+    /* ---------- 家庭排序：和表單 Step2 名單同順序 ----------
+       各月表單裡的 TEAM_DATA 就是名單，從表單讀出順序；
+       新增月份時，在這裡加上「月份: 表單資料夾」 */
+    const FORM_PAGES = { "12月": "./", "1月": "january/" };
+    let familyOrder = null; // 自然名 → 在名單裡的順序
+
+    async function loadFamilyOrder() {
+      if (familyOrder || !FORM_PAGES[LABEL]) return;
+      try {
+        const src = await (await fetch(FORM_PAGES[LABEL])).text();
+        const lit = src.match(/const TEAM_DATA = (\{[\s\S]*?\n\s*\});/)[1];
+        const teamData = Function('"use strict"; return ' + lit)();
+        familyOrder = {};
+        let i = 0;
+        Object.values(teamData).forEach(list => list.forEach(fam => {
+          fam.members.forEach(m => { familyOrder[m.name] = i; });
+          i++;
+        }));
+      } catch (err) {
+        console.warn("讀不到表單名單，家庭照填單先後排列：", err);
+      }
+    }
+
+    // 依名單順序排；找不到的家庭排在最後（維持填單先後）
+    function sortFamilies(list) {
+      if (!familyOrder) return list;
+      const pos = f => familyOrder[f.registrant] ?? Infinity;
+      return list.map((f, i) => [f, i]).sort((a, b) => (pos(a[0]) - pos(b[0])) || (a[1] - b[1])).map(x => x[0]);
+    }
+
+    const num = v => Number(v) || 0;
+    const money = v => "$" + num(v).toLocaleString("en-US");
+
+    function getSavedPassword() {
+      try { return sessionStorage.getItem(PW_KEY) || ""; } catch (e) { return ""; }
+    }
+
+    function savePassword(pw) {
+      try { pw ? sessionStorage.setItem(PW_KEY, pw) : sessionStorage.removeItem(PW_KEY); } catch (e) { }
+    }
+
+    /* ---------- 密碼畫面 ---------- */
+    function showLogin(message = "") {
+      toolbar.hidden = true;
+      content.innerHTML = `<div class="login">
+          <p>這一頁只給幹部查看，請輸入密碼</p>
+          <form id="loginForm">
+            <input type="password" id="pwInput" placeholder="密碼" autocomplete="current-password" required>
+            <button type="submit" id="loginBtn">查看</button>
+          </form>
+          <div class="error" id="loginError">${escapeHtml(message)}</div>
+        </div>`;
+      const input = document.getElementById("pwInput");
+      input.focus();
+      document.getElementById("loginForm").addEventListener("submit", e => {
+        e.preventDefault();
+        loadFees(input.value);
+      });
+    }
+
+    /* ---------- 向後台要資料（密碼放在 POST 內容，不放網址） ---------- */
+    async function loadFees(password) {
+      const loginBtn = document.getElementById("loginBtn");
+      if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = "確認中…"; }
+      refreshBtn.disabled = true;
+      updatedEl.textContent = "讀取中…";
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "fees", month: MONTH, password }),
+          signal: controller.signal
+        });
+        const result = await res.json();
+        if (result.status === "denied") {
+          savePassword("");
+          return showLogin("密碼不對，請再試一次");
+        }
+        if (result.status !== "success") throw new Error(result.message || "後台回傳失敗");
+
+        savePassword(password);
+        await loadFamilyOrder();
+        lastFamilies = result.families || [];
+        render(lastFamilies);
+        toolbar.hidden = false;
+        updatedEl.textContent = "更新時間 " + new Date().toLocaleTimeString("zh-TW", { hour12: false });
+      } catch (err) {
+        console.error("讀取費用失敗：", err);
+        if (!content.querySelector(".tiles")) {
+          showLogin("讀取失敗：" + (err.name === "AbortError" ? "連線逾時" : err.message) + "，請再試一次");
+        } else {
+          updatedEl.textContent = "讀取失敗，請按「重新整理」再試一次";
+        }
+      } finally {
+        clearTimeout(timer);
+        refreshBtn.disabled = false;
+      }
+    }
+
+    /* ---------- 畫面 ---------- */
+    function render(families) {
+      if (!families.length) {
+        content.innerHTML = `<div class="message">${escapeHtml(LABEL)}還沒有家庭填寫</div>`;
+        return;
+      }
+      // 12月沒有住宿：試算表沒有房費欄，就不顯示房費和住宿
+      const hasLodging = families.some(f => f.roomFee !== undefined);
+
+      const sum = (list, key) => list.reduce((n, f) => n + num(f[key]), 0);
+      // 費用合計欄空白時（舊資料），用餐費＋房費補上
+      families.forEach(f => { if (f.total === "" || f.total == null) f.total = num(f.mealFee) + num(f.roomFee); });
+
+      const byTeam = {};
+      families.forEach(f => (byTeam[f.team || "未分小隊"] = byTeam[f.team || "未分小隊"] || []).push(f));
+      // 花天草地固定都有按鈕；試算表裡如果有其他小隊名稱，排在最後
+      const teams = TEAM_ORDER.concat(Object.keys(byTeam).filter(t => !TEAM_ORDER.includes(t)));
+      if (!teams.includes(selectedTeam)) selectedTeam = teams[0];
+
+      let html = `<div class="tiles">
+        <div class="tile total"><div class="label">全團費用合計</div><div class="num">${money(sum(families, "total"))}</div>
+          <div class="sub">${families.length} 戶</div></div>
+        <div class="tile"><div class="label">餐費</div><div class="num">${money(sum(families, "mealFee"))}</div>
+          <div class="sub">用餐 ${sum(families, "mealCount")} 人</div></div>
+        ${hasLodging ? `<div class="tile"><div class="label">房費</div><div class="num">${money(sum(families, "roomFee"))}</div>
+          <div class="sub">住宿 ${sum(families, "lodgingCount")} 人</div></div>` : ""}
+      </div>`;
+
+      // 切換按鈕：花叢｜天空｜草原｜大地
+      html += `<div class="team-switch">${teams.map(t =>
+        `<button type="button" data-team="${escapeHtml(t)}"${t === selectedTeam ? ' class="on"' : ""}>${escapeHtml(t.replace(/小隊$/, ""))}</button>`).join("")}</div>`;
+
+      // 只顯示選到的小隊
+      {
+        const team = selectedTeam;
+        const list = sortFamilies(byTeam[team] || []);
+        html += `<div class="team" data-team="${escapeHtml(team)}">
+          <div class="team-head">
+            <span class="name">${escapeHtml(team)}</span>
+            <span class="count">${list.length} 戶</span>
+            <span class="sum">${money(sum(list, "total"))}</span>
+          </div>`;
+        if (!list.length) html += `<div class="empty-team">這個小隊還沒有家庭填寫</div>`;
+        list.forEach(f => {
+          const items = [`<span class="item">用餐 ${num(f.mealCount)} 人 ${money(f.mealFee)}</span>`];
+          if (!hasLodging) {
+            // 12月：只有餐費
+          } else if (num(f.lodgingCount) || f.roomType) {
+            items.push(`<span class="item">住宿 ${num(f.lodgingCount)} 人`
+              + (f.roomType ? `・${escapeHtml(roomLabel(f.roomType))}` : "") + ` ${money(f.roomFee)}</span>`);
+          } else {
+            items.push(`<span class="item">不住宿</span>`);
+          }
+          const extra = Object.entries(f.extra || {}).map(([k, v]) =>
+            `<span class="chip">${escapeHtml(k)}：${escapeHtml(v)}</span>`).join("");
+          html += `<div class="family">
+              <div class="fam-top"><span class="fam-name">${escapeHtml(f.registrant)}</span>
+                <span class="fam-total">${money(f.total)}</span></div>
+              <div class="fam-detail">${items.join("　")}</div>
+              ${extra ? `<div class="fam-extra">${extra}</div>` : ""}
+            </div>`;
+        });
+        html += `</div>`;
+      }
+
+      content.innerHTML = html;
+    }
+
+    // 目前看的小隊（預設花叢）；按「重新整理」後維持原本選的小隊
+    let selectedTeam = TEAM_ORDER[0];
+    let lastFamilies = [];
+    content.addEventListener("click", e => {
+      const btn = e.target.closest(".team-switch button");
+      if (!btn || btn.dataset.team === selectedTeam) return;
+      selectedTeam = btn.dataset.team;
+      render(lastFamilies);
+    });
+
+    refreshBtn.addEventListener("click", () => loadFees(getSavedPassword()));
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      savePassword("");
+      showLogin();
+    });
+
+    // 同一個分頁之前輸入過密碼，就直接讀資料
+    const saved = getSavedPassword();
+    if (saved) {
+      content.innerHTML = `<div class="message">讀取中…</div>`;
+      loadFees(saved);
+    } else {
+      showLogin();
+    }
+  </script>
+
+</body>
+</html>
