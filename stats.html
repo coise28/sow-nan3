@@ -219,12 +219,6 @@
       padding: 0 12px 10px 14px;
     }
 
-    .empty {
-      font-size: 14px;
-      color: #8fa39e;
-      margin-left: 4px;
-    }
-
     .message {
       text-align: center;
       color: #8fa39e;
@@ -353,7 +347,7 @@
       content.innerHTML = html;
     }
 
-    // 目前選的名單（"出席"／"早退"／"晚到"／"請假"），空字串代表都不顯示
+    // 目前選的名單（"出席"／"早退"／"晚到"／"請假"／"分團"），空字串代表都不顯示
     let selectedStatus = "";
     // 出席名單裡已展開的團（按「重新整理」後保持展開）
     const openGroups = new Set();
