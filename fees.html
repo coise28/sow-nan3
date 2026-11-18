@@ -60,65 +60,6 @@
       cursor: default;
     }
 
-    .toolbar .logout {
-      margin-left: auto;
-    }
-
-    /* 密碼畫面 */
-    .login {
-      text-align: center;
-      padding: 24px 0 8px;
-    }
-
-    .login p {
-      margin: 0 0 14px;
-      font-size: 14px;
-      color: #6b7c78;
-    }
-
-    .login form {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .login input {
-      width: 220px;
-      max-width: 100%;
-      padding: 10px 14px;
-      font-size: 16px;
-      border: 1px solid #d6e6e0;
-      border-radius: 999px;
-      outline: none;
-    }
-
-    .login input:focus {
-      border-color: #3fa493;
-    }
-
-    .login button {
-      padding: 10px 20px;
-      font-size: 15px;
-      border: none;
-      border-radius: 999px;
-      background: #3fa493;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .login button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
-    .login .error {
-      color: #be1d2b;
-      font-size: 14px;
-      margin-top: 12px;
-      min-height: 1.4em;
-    }
-
     /* 上方總計 */
     .tiles {
       display: grid;
@@ -321,12 +262,11 @@
 
   <div class="card">
     <h1 id="title">💰 費用統計</h1>
-    <div class="toolbar" id="toolbar" hidden>
-      <span id="updated"></span>
+    <div class="toolbar" id="toolbar">
+      <span id="updated">讀取中…</span>
       <button id="refreshBtn" type="button">重新整理</button>
-      <button class="logout" id="logoutBtn" type="button">登出</button>
     </div>
-    <div id="content"></div>
+    <div id="content"><div class="message">讀取中…</div></div>
   </div>
 
   <script>
@@ -334,8 +274,7 @@
        幹部專用：各家庭費用統計（依小隊 花叢 → 天空 → 草原 → 大地）
        網址：fees.html?month=1月  → 讀「1月-費用統計」
              fees.html?label=12月 → 讀「餐費統計」（12月分頁沒有月份，只有餐費）
-       需要密碼：密碼只存在 Apps Script 的指令碼屬性 FEE_PASSWORD，
-       網頁裡沒有密碼，資料要密碼正確才會從後台傳過來。
+       不需要密碼：打開就讀資料（不放在表單連結裡，只把網址給幹部）
        ============================================================ */
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyogdHKOd1yRbqzglVpDZL_i1sRR-1iq69zucNT1gIeuZund9AmvWvM0WxTrKCrw905/exec";
     const params = new URLSearchParams(location.search);
@@ -343,8 +282,6 @@
     const MONTH = params.get("month") ?? (params.get("label") ? "" : "1月"); // 試算表分頁用的月份
     const LABEL = params.get("label") || MONTH;                              // 標題顯示的月份
     const TEAM_ORDER = ["花叢小隊", "天空小隊", "草原小隊", "大地小隊"];
-    // 只記在這個分頁，關掉分頁就要重新輸入
-    const PW_KEY = "feePassword";
 
     document.getElementById("title").textContent = `💰 ${LABEL}費用統計`;
     document.title = `${LABEL}費用統計`;
@@ -396,37 +333,8 @@
     const num = v => Number(v) || 0;
     const money = v => "$" + num(v).toLocaleString("en-US");
 
-    function getSavedPassword() {
-      try { return sessionStorage.getItem(PW_KEY) || ""; } catch (e) { return ""; }
-    }
-
-    function savePassword(pw) {
-      try { pw ? sessionStorage.setItem(PW_KEY, pw) : sessionStorage.removeItem(PW_KEY); } catch (e) { }
-    }
-
-    /* ---------- 密碼畫面 ---------- */
-    function showLogin(message = "") {
-      toolbar.hidden = true;
-      content.innerHTML = `<div class="login">
-          <p>請輸入密碼</p>
-          <form id="loginForm">
-            <input type="password" id="pwInput" placeholder="密碼" autocomplete="current-password" required>
-            <button type="submit" id="loginBtn">查看</button>
-          </form>
-          <div class="error" id="loginError">${escapeHtml(message)}</div>
-        </div>`;
-      const input = document.getElementById("pwInput");
-      input.focus();
-      document.getElementById("loginForm").addEventListener("submit", e => {
-        e.preventDefault();
-        loadFees(input.value);
-      });
-    }
-
-    /* ---------- 向後台要資料（密碼放在 POST 內容，不放網址） ---------- */
-    async function loadFees(password) {
-      const loginBtn = document.getElementById("loginBtn");
-      if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = "確認中…"; }
+    /* ---------- 向後台要資料 ---------- */
+    async function loadFees() {
       refreshBtn.disabled = true;
       updatedEl.textContent = "讀取中…";
 
@@ -436,28 +344,21 @@
         const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ action: "fees", month: MONTH, password }),
+          body: JSON.stringify({ action: "fees", month: MONTH }),
           signal: controller.signal
         });
         const result = await res.json();
-        if (result.status === "denied") {
-          savePassword("");
-          return showLogin("密碼不對，請再試一次");
-        }
         if (result.status !== "success") throw new Error(result.message || "後台回傳失敗");
 
-        savePassword(password);
         await loadFamilyOrder();
         lastFamilies = result.families || [];
         render(lastFamilies);
-        toolbar.hidden = false;
         updatedEl.textContent = "更新時間 " + new Date().toLocaleTimeString("zh-TW", { hour12: false });
       } catch (err) {
         console.error("讀取費用失敗：", err);
+        updatedEl.textContent = "讀取失敗，請按「重新整理」再試一次";
         if (!content.querySelector(".tiles")) {
-          showLogin("讀取失敗：" + (err.name === "AbortError" ? "連線逾時" : err.message) + "，請再試一次");
-        } else {
-          updatedEl.textContent = "讀取失敗，請按「重新整理」再試一次";
+          content.innerHTML = `<div class="message">讀取失敗：${escapeHtml(err.name === "AbortError" ? "連線逾時" : err.message)}</div>`;
         }
       } finally {
         clearTimeout(timer);
@@ -587,20 +488,10 @@
       render(lastFamilies);
     });
 
-    refreshBtn.addEventListener("click", () => loadFees(getSavedPassword()));
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      savePassword("");
-      showLogin();
-    });
+    refreshBtn.addEventListener("click", () => loadFees());
 
-    // 同一個分頁之前輸入過密碼，就直接讀資料
-    const saved = getSavedPassword();
-    if (saved) {
-      content.innerHTML = `<div class="message">讀取中…</div>`;
-      loadFees(saved);
-    } else {
-      showLogin();
-    }
+    // 打開就讀資料
+    loadFees();
   </script>
 
 </body>
