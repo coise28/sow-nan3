@@ -829,11 +829,20 @@
       });
     }
 
+    // 換了一個家庭：清掉上一家填的車牌和備註（同一家換另一位大人登記則保留）
+    let currentFamily = null;
+    function clearFamilyNotes() {
+      document.getElementById("plateInput").value = "";
+      document.getElementById("remarkInput").value = "";
+    }
+
     function selectTeam(teamName, pillEl) {
       selectedTeam = teamName;
       document.querySelectorAll(".pill").forEach(p => p.classList.remove("selected"));
       pillEl.classList.add("selected");
       populateNameOptions(teamName);
+      currentFamily = null;
+      clearFamilyNotes();
       memberList.innerHTML = "<div style='color:#999;font-size:14px;'>請選擇 Step2 的自然名</div>";
       // 換小隊：清掉上一家的狀態、用餐、住宿和房型，Step4 也跟著隱藏
       memberStatus = {};
@@ -902,6 +911,10 @@
         fam.members.some(m => m.name === selectedName)
       );
       if (!myFamily) return;
+      if (myFamily !== currentFamily) {
+        clearFamilyNotes();
+        currentFamily = myFamily;
+      }
 
       currentFamilyName = myFamily.family; // 記下目前這個家庭的名稱，送出時要用
 
