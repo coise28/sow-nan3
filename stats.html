@@ -219,6 +219,156 @@
       padding: 0 12px 10px 14px;
     }
 
+    /* 依團別／依家庭 切換 */
+    .view-switch {
+      display: inline-flex;
+      border: 1px solid #d6e6e0;
+      border-radius: 0; /* 方角 */
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .view-switch button {
+      border: none;
+      background: #fffefa;
+      color: #3d4a47;
+      font-size: 14px;
+      padding: 6px 16px;
+      cursor: pointer;
+    }
+
+    .view-switch button.on {
+      background: #3fa493;
+      color: #fff;
+    }
+
+    /* 小隊顏色：花叢＝粉紅、天空＝藍、草原＝綠、大地＝土黃（和試算表同色） */
+    :where(.team, .team-switch button) { --team-bg: #eeeeee; --team-border: #dddddd; --team-text: #555555; }
+    [data-team="花叢小隊"] { --team-bg: #fbe1ea; --team-border: #f3c6d5; --team-text: #a3456a; }
+    [data-team="天空小隊"] { --team-bg: #dcebfa; --team-border: #bcd6f2; --team-text: #34649a; }
+    [data-team="草原小隊"] { --team-bg: #e2f2d9; --team-border: #c6e3b6; --team-text: #457a2c; }
+    [data-team="大地小隊"] { --team-bg: #f3e6d3; --team-border: #e3cfae; --team-text: #87602a; }
+
+    /* 花叢｜天空｜草原｜大地：資料夾分頁標籤，選到的那頁和下面的小隊內容連在一起 */
+    .team-switch {
+      display: flex;
+      gap: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .team-switch button {
+      flex: 1;
+      border: 1px solid #e3eeea;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      background: #f6f8f7;
+      color: #8fa39e;
+      font-size: 15px;
+      padding: 8px 4px;
+      cursor: pointer;
+    }
+
+    .team-switch button.on {
+      background: var(--team-bg);
+      color: var(--team-text);
+      border-color: var(--team-border);
+      font-weight: 700;
+      margin-bottom: -1px;          /* 蓋住下面內容的上框線，看起來連在一起 */
+      padding-bottom: 9px;
+    }
+
+    .team {
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+      border: 1px solid var(--team-border);
+    }
+
+    .team-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--team-bg);
+      color: var(--team-text);
+    }
+
+    .team-head .name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .team-head .count {
+      font-size: 13px;
+    }
+
+    .team-head .sum {
+      margin-left: auto;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .family {
+      padding: 10px 14px;
+      border-top: 1px solid #eef3f1;
+    }
+
+    .family.not-filled {
+      color: #a9b6b2;
+    }
+
+    .fam-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .fam-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .fam-sum {
+      margin-left: auto;
+      font-size: 13px;
+      color: #6b7c78;
+      white-space: nowrap;
+    }
+
+    .family.not-filled .fam-sum {
+      color: #c0a060;
+    }
+
+    .members {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .member {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* 狀態小標籤（顏色和上方人數格一致） */
+    .badge {
+      font-size: 12px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: #e3f4ef;
+      color: #2f7d6f;
+    }
+
+    .badge[data-status="早退"] { background: #fbf6e4; color: #a8924a; }  /* 和上方早退格同色系，較淡 */
+    .badge[data-status="晚到"] { background: #eff3fa; color: #7088ad; }  /* 和上方晚到格同色系，較淡 */
+    .badge[data-status="請假"] { background: #f8ddd5; color: #a3452c; }
+    .badge[data-status="分團"] { background: #ececec; color: #5f5f5f; }
+    .badge[data-status="未填"] { background: #f5f5f2; color: #a9b6b2; }
+
     .message {
       text-align: center;
       color: #8fa39e;
@@ -307,6 +457,19 @@
         content.innerHTML = html + `<div class="message">目前還沒有人填寫</div>`;
         return;
       }
+
+      // 依團別／依小隊 切換（讀得到表單名單才顯示）
+      if (teamData) {
+        html += `<div class="view-switch">
+          <button type="button" data-view="group"${view === "group" ? ' class="on"' : ""}>依團別</button>
+          <button type="button" data-view="team"${view === "team" ? ' class="on"' : ""}>依家庭</button>
+        </div>`;
+        if (view === "team") {
+          content.innerHTML = html + teamHtml(people);
+          content.querySelectorAll(".tile.tab").forEach(t => t.classList.remove("active"));
+          return;
+        }
+      }
       html += `<div class="hint"${selectedStatus ? " hidden" : ""}>點上方的人數，查看名單</div>`;
 
       // 各狀態：依團別 → 分類代碼列出名單；早退、晚到在名字後面加時間
@@ -347,8 +510,74 @@
       content.innerHTML = html;
     }
 
+    /* ---------- 依家庭：花叢 → 天空 → 草原 → 大地 ----------
+       小隊和家庭從該月表單的家庭名單（TEAM_DATA）對照自然名，
+       沒填的家人顯示「未填」，整家沒填顯示「尚未填寫」。
+       新增月份時，在 FORM_PAGES 加上「月份: 表單資料夾」 */
+    const FORM_PAGES = { "12月": "./", "1月": "january/" };
+    const TEAM_ORDER = ["花叢小隊", "天空小隊", "草原小隊", "大地小隊"];
+    const ATTEND = ["出席", "早退", "晚到"];
+    let teamData = null;       // { 小隊: [{ family, members: [{ name, … }] }] }
+    let view = "group";        // "group" 依團別、"team" 依家庭
+    let selectedTeam = TEAM_ORDER[0];
+    let lastPeople = [];
+
+    async function loadTeamData() {
+      if (teamData || !FORM_PAGES[LABEL]) return;
+      try {
+        const src = await (await fetch(FORM_PAGES[LABEL])).text();
+        const lit = src.match(/const TEAM_DATA = (\{[\s\S]*?\n\s*\});/)[1];
+        teamData = Function('"use strict"; return ' + lit)();
+      } catch (err) {
+        console.warn("讀不到表單家庭名單，只顯示依團別：", err);
+      }
+    }
+
+    function teamHtml(people) {
+      const byName = {};
+      people.forEach(p => { byName[p.name] = p; });
+      const teams = TEAM_ORDER.filter(t => teamData[t])
+        .concat(Object.keys(teamData).filter(t => !TEAM_ORDER.includes(t)));
+      if (!teams.includes(selectedTeam)) selectedTeam = teams[0];
+
+      let html = `<div class="team-switch">${teams.map(t =>
+        `<button type="button" data-team="${escapeHtml(t)}"${t === selectedTeam ? ' class="on"' : ""}>${escapeHtml(t.replace(/小隊$/, ""))}</button>`).join("")}</div>`;
+
+      const families = teamData[selectedTeam] || [];
+      const filled = families.filter(f => f.members.some(m => byName[m.name]));
+      const attending = families.reduce((n, f) =>
+        n + f.members.filter(m => byName[m.name] && ATTEND.includes(byName[m.name].status)).length, 0);
+
+      html += `<div class="team" data-team="${escapeHtml(selectedTeam)}">
+        <div class="team-head">
+          <span class="name">${escapeHtml(selectedTeam)}</span>
+          <span class="count">已填 ${filled.length}／${families.length} 家庭</span>
+          <span class="sum">出席 ${attending} 人</span>
+        </div>`;
+      families.forEach(f => {
+        const regs = f.members.filter(m => byName[m.name]);
+        const att = regs.filter(m => ATTEND.includes(byName[m.name].status)).length;
+        const famName = f.family.replace(/\s*家庭$/, "家");
+        html += `<div class="family${regs.length ? "" : " not-filled"}">
+          <div class="fam-top"><span class="fam-name">${escapeHtml(famName)}</span>
+            <span class="fam-sum">${regs.length ? `出席 ${att}／${f.members.length}` : "尚未填寫"}</span></div>`;
+        if (regs.length) {
+          html += `<div class="members">${f.members.map(m => {
+            const p = byName[m.name];
+            const status = p ? p.status : "未填";
+            return `<span class="member"><span class="m-name">${escapeHtml(m.name)}</span>`
+              + `<span class="badge" data-status="${escapeHtml(status)}">${escapeHtml(status)}`
+              + (p && p.timeNote ? ` ${escapeHtml(p.timeNote)}` : "") + `</span></span>`;
+          }).join("")}</div>`;
+        }
+        html += `</div>`;
+      });
+      return html + `</div>`;
+    }
+
     // 目前選的名單（"出席"／"早退"／"晚到"／"請假"／"分團"），空字串代表都不顯示
-    let selectedStatus = "";
+    // 一打開就顯示出席名單
+    let selectedStatus = "出席";
     // 出席名單裡已展開的團（按「重新整理」後保持展開）
     const openGroups = new Set();
 
@@ -366,7 +595,27 @@
     const refreshBtn = document.getElementById("refreshBtn");
     content.addEventListener("click", e => {
       const tile = e.target.closest(".tile.tab");
-      if (tile) selectStatus(tile.dataset.status);
+      if (tile) {
+        // 在依家庭畫面點人數格：回到依團別，顯示那份名單
+        if (view === "team") {
+          view = "group";
+          selectedStatus = tile.dataset.status;
+          return render(lastPeople);
+        }
+        return selectStatus(tile.dataset.status);
+      }
+      const viewBtn = e.target.closest(".view-switch button");
+      if (viewBtn && viewBtn.dataset.view !== view) {
+        view = viewBtn.dataset.view;
+        // 切回依團別：直接顯示出席名單
+        if (view === "group") selectedStatus = "出席";
+        return render(lastPeople);
+      }
+      const teamBtn = e.target.closest(".team-switch button");
+      if (teamBtn && teamBtn.dataset.team !== selectedTeam) {
+        selectedTeam = teamBtn.dataset.team;
+        render(lastPeople);
+      }
     });
     // 記住哪幾團是展開的（toggle 事件不會往上傳，所以用 capture）
     content.addEventListener("toggle", e => {
@@ -385,7 +634,9 @@
           { signal: controller.signal });
         const result = await res.json();
         if (result.status !== "success") throw new Error(result.message || "後端回傳失敗");
-        render(result.people || []);
+        await loadTeamData();
+        lastPeople = result.people || [];
+        render(lastPeople);
         updatedEl.textContent = "更新時間 " + new Date().toLocaleTimeString("zh-TW", { hour12: false });
       } catch (err) {
         console.error("讀取統計失敗：", err);
