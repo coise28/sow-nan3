@@ -473,8 +473,14 @@
     const KID_CATEGORIES = ["A小蟻", "B小蜂"];
     const UNCOUNTED_CATEGORIES = ["S小小蟻"];
 
+    // 這家要算的用餐名單（去掉小小蟻）；後台沒回傳名單時回傳 null
+    function countedMealNames(f) {
+      if (!f.mealNames || !f.mealNames.length) return null;
+      return f.mealNames.filter(n => !UNCOUNTED_CATEGORIES.includes(memberCat[n]));
+    }
+
     function mealSplit(families) {
-      const total = families.reduce((n, f) => n + num(f.mealCount), 0);
+      const total = families.reduce((n, f) => n + (countedMealNames(f)?.length ?? num(f.mealCount)), 0);
       const names = families.flatMap(f => f.mealNames || []);
       if (!names.length || !Object.keys(memberCat).length) return `用餐 ${total} 人`;
       let adult = 0, kid = 0;
@@ -551,12 +557,16 @@
           }
           const extra = Object.entries(f.extra || {}).map(([k, v]) =>
             `<span class="chip">${escapeHtml(k)}：${escapeHtml(v)}</span>`).join("");
+          // 用餐人數不算小小蟻（名單照列，小小蟻加括號）；後台沒回傳名單時，用試算表的用餐人數
+          const eaters = countedMealNames(f);
           html += `<div class="family">
               <div class="fam-top"><span class="fam-name">${escapeHtml(f.registrant)}家</span>
-                <span class="meal-badge">用餐 <b>${num(f.mealCount)}</b> 人</span>
+                <span class="meal-badge">用餐 <b>${eaters ? eaters.length : num(f.mealCount)}</b> 人</span>
                 <span class="fam-total">${money(f.total)}</span></div>
               ${f.mealNames && f.mealNames.length
-                ? `<div class="meal-names">${f.mealNames.map(n => `<span class="person">${escapeHtml(n)}</span>`).join("、")}</div>` : ""}
+                ? `<div class="meal-names">${f.mealNames.map(n => UNCOUNTED_CATEGORIES.includes(memberCat[n])
+                    ? `<span class="person">（${escapeHtml(n)}）</span>`
+                    : `<span class="person">${escapeHtml(n)}</span>`).join("、")}</div>` : ""}
               ${items.length ? `<div class="fam-detail">${items.join("　")}</div>` : ""}
               ${extra ? `<div class="fam-extra">${extra}</div>` : ""}
             </div>`;
