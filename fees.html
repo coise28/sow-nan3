@@ -7,6 +7,22 @@
   <meta name="robots" content="noindex, nofollow">
   <title>南三團費用統計</title>
   <style>
+    /* ============================================================
+       帳本風格：暖色紙張底、咖啡色字、金額靠右對齊、每家一列
+       （和出席表單的綠色、出席統計頁區分開來）
+       ============================================================ */
+    :root {
+      --paper: #f6f0e4;
+      --sheet: #fffdf8;
+      --ink: #4a3726;
+      --ink-soft: #8a7560;
+      --ink-faint: #b9a68e;
+      --rule: #e6dac5;
+      --rule-strong: #cdb894;
+      --accent: #b9772e;
+      --accent-bg: #f6e7cf;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -14,26 +30,46 @@
     body {
       margin: 0;
       font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-      background: #fffbee;
-      color: #3d4a47;
+      background: var(--paper);
+      color: var(--ink);
       display: flex;
       justify-content: center;
       padding: 32px 16px;
     }
 
     .card {
-      background: #ffffff;
+      background: var(--sheet);
       max-width: 720px;
       width: 100%;
-      border-radius: 12px;
-      padding: 28px 24px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 28px 24px 32px;
+      box-shadow: 0 1px 0 var(--rule), 0 6px 18px rgba(90, 60, 20, 0.06);
+    }
+
+    /* 頁首：細線標題＋月份標籤 */
+    .page-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 3px double var(--rule-strong);
     }
 
     h1 {
       font-size: 22px;
-      margin: 0 0 6px;
-      color: #3fa493;
+      margin: 0;
+      color: var(--ink);
+      letter-spacing: 1px;
+    }
+
+    .month-tag {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 3px;
+      background: var(--accent);
+      color: #fff;
     }
 
     .toolbar {
@@ -41,16 +77,16 @@
       align-items: center;
       gap: 10px;
       font-size: 13px;
-      color: #8fa39e;
-      margin-bottom: 20px;
+      color: var(--ink-soft);
+      margin: 10px 0 22px;
     }
 
     .toolbar button {
       padding: 4px 12px;
-      border: 1px solid #d6e6e0;
-      border-radius: 999px;
-      background: #fffefa;
-      color: #3d4a47;
+      border: 1px solid var(--rule-strong);
+      border-radius: 3px;
+      background: transparent;
+      color: var(--ink);
       font-size: 13px;
       cursor: pointer;
     }
@@ -60,86 +96,76 @@
       cursor: default;
     }
 
-    /* 上方總計 */
-    .tiles {
+    /* 總計：三欄，用直線分隔 */
+    .summary {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 8px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(var(--cols, 3), 1fr);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      margin-bottom: 26px;
     }
 
-    .tile {
-      border-radius: 10px;
-      padding: 10px 12px;
-      background: #f4faf8;
+    .summary .cell {
+      padding: 12px 14px;
+      border-left: 1px solid var(--rule);
     }
 
-    .tile .label {
-      font-size: 13px;
+    .summary .cell:first-child {
+      border-left: none;
+      background: var(--accent-bg);
     }
 
-    .tile .num {
+    .summary .label {
+      font-size: 12px;
+      color: var(--ink-soft);
+      letter-spacing: 1px;
+    }
+
+    .summary .num {
       font-size: 22px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
+      margin: 2px 0;
     }
 
-    .tile .sub {
+    .summary .cell:first-child .num {
+      color: var(--accent);
+    }
+
+    .summary .sub {
       font-size: 12px;
-      color: #6b7c78;
+      color: var(--ink-soft);
+      line-height: 1.6;
     }
 
-    .tile.total {
-      background: #3fa493;
-      color: #fff;
-    }
+    /* 小隊分頁：文字＋底線（選到的那隊用小隊顏色） */
+    :where(.team-tabs button, .team-head) { --team: #8a7560; --team-bg: #f3efe7; }
+    [data-team="花叢小隊"] { --team: #b4527a; --team-bg: #fbeaf0; }
+    [data-team="天空小隊"] { --team: #3f73ab; --team-bg: #e6f0fb; }
+    [data-team="草原小隊"] { --team: #4f8a33; --team-bg: #eaf5e3; }
+    [data-team="大地小隊"] { --team: #96692c; --team-bg: #f5ebdc; }
 
-    .tile.total .sub {
-      color: #e3f4ef;
-    }
-
-    /* 各小隊：花叢＝粉紅、天空＝藍、草原＝綠、大地＝土黃（和試算表同色） */
-    .team {
-      margin-bottom: 10px;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid var(--team-border);
-    }
-
-    /* 小隊顏色（切換按鈕和小隊區塊共用） */
-    :where(.team, .team-switch button) { --team-bg: #eeeeee; --team-border: #dddddd; --team-text: #555555; }
-    [data-team="花叢小隊"] { --team-bg: #fbe1ea; --team-border: #f3c6d5; --team-text: #a3456a; }
-    [data-team="天空小隊"] { --team-bg: #dcebfa; --team-border: #bcd6f2; --team-text: #34649a; }
-    [data-team="草原小隊"] { --team-bg: #e2f2d9; --team-border: #c6e3b6; --team-text: #457a2c; }
-    [data-team="大地小隊"] { --team-bg: #f3e6d3; --team-border: #e3cfae; --team-text: #87602a; }
-
-    /* 花叢｜天空｜草原｜大地 切換：一次只看一個小隊 */
-    .team-switch {
+    .team-tabs {
       display: flex;
-      border: 1px solid #d6e6e0;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 14px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 0;
     }
 
-    .team-switch button {
+    .team-tabs button {
       flex: 1;
       border: none;
-      border-left: 1px solid #d6e6e0;
-      background: #fffefa;
-      color: #3d4a47;
+      border-bottom: 3px solid transparent;
+      background: none;
+      color: var(--ink-faint);
       font-size: 15px;
-      padding: 8px 4px;
+      padding: 8px 4px 7px;
       cursor: pointer;
+      margin-bottom: -1px;
     }
 
-    .team-switch button:first-child {
-      border-left: none;
-    }
-
-    .team-switch button.on {
-      background: var(--team-bg);
-      color: var(--team-text);
+    .team-tabs button.on {
+      color: var(--team);
+      border-bottom-color: var(--team);
       font-weight: 700;
     }
 
@@ -147,16 +173,8 @@
       display: flex;
       align-items: baseline;
       gap: 8px;
-      padding: 10px 14px;
-      background: var(--team-bg);
-      color: var(--team-text);
-    }
-
-    .team .empty-team {
-      padding: 16px 14px;
-      font-size: 14px;
-      color: #8fa39e;
-      text-align: center;
+      padding: 10px 4px;
+      color: var(--team);
     }
 
     .team-head .name {
@@ -166,40 +184,86 @@
 
     .team-head .count {
       font-size: 13px;
+      color: var(--ink-soft);
     }
 
-    .team-head .sum {
-      margin-left: auto;
-      font-size: 17px;
-      font-weight: 700;
+    /* 帳本表格：家庭｜餐費｜房費｜合計 */
+    .ledger {
+      --grid: minmax(0, 1fr) 92px 104px 104px;
+    }
+
+    .ledger.meal-only {
+      --grid: minmax(0, 1fr) 104px;
+    }
+
+    .ledger .row {
+      display: grid;
+      grid-template-columns: var(--grid);
+      column-gap: 20px;
+      padding: 12px 8px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .ledger .row:nth-child(even of .family-row) {
+      background: #fcf8f0;
+    }
+
+    .ledger .head-row {
+      border-top: none;
+      padding: 6px 4px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      letter-spacing: 1px;
+    }
+
+    .ledger .amt {
+      text-align: right;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
-    .family {
-      padding: 10px 14px;
-      border-top: 1px solid #eef3f1;
+    .ledger .amt .note {
+      display: block;
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 2px;
     }
 
-    .fam-top {
+    .ledger .total {
+      font-weight: 700;
+    }
+
+    .fam-line {
       display: flex;
       align-items: center;
-      gap: 8px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .fam-name {
+      font-weight: 700;
+      font-size: 15px;
     }
 
     /* 名字後面的用餐人數 */
     .meal-badge {
-      font-size: 13px;
-      padding: 2px 10px;
-      border-radius: 999px;
-      background: #e3f4ef;
-      color: #2f7d6f;
+      font-size: 12px;
+      padding: 1px 8px;
+      border-radius: 3px;
+      background: #fbf3e6;   /* 比總計那格的底色再淡一點 */
+      color: var(--accent);
       white-space: nowrap;
+    }
+
+    .meal-badge b {
+      font-size: 15px;
+      font-variant-numeric: tabular-nums;
     }
 
     /* 這家有用餐的人 */
     .meal-names {
-      font-size: 14px;
-      color: #2f7d6f;
+      font-size: 13px;
+      color: var(--ink-soft);
       margin-top: 4px;
       line-height: 1.6;
     }
@@ -208,60 +272,89 @@
       white-space: nowrap;
     }
 
-    .meal-badge b {
-      font-size: 16px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .fam-name {
-      font-weight: 600;
-      font-size: 15px;
-    }
-
-    .fam-total {
-      margin-left: auto;
-      font-weight: 700;
-      font-size: 16px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .fam-detail {
-      font-size: 13px;
-      color: #6b7c78;
-      margin-top: 2px;
-      line-height: 1.6;
-    }
-
-    .fam-detail .item {
-      white-space: nowrap;
-    }
-
-    .fam-extra {
-      margin-top: 4px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
     .chip {
+      display: inline-block;
       font-size: 12px;
       padding: 1px 8px;
-      border-radius: 999px;
-      background: #f4faf8;
-      color: #4f5f5b;
+      margin-top: 4px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+      color: var(--ink-soft);
+    }
+
+    /* 小計列：上方雙線 */
+    .ledger .foot-row {
+      border-top: 3px double var(--rule-strong);
+      font-weight: 700;
+      color: var(--team, var(--ink));
+    }
+
+    .empty-team,
+    .message {
+      text-align: center;
+      color: var(--ink-faint);
+      padding: 24px 0;
+      font-size: 14px;
     }
 
     .message {
-      text-align: center;
-      color: #8fa39e;
       padding: 40px 0;
+    }
+
+    .summary .sub .line {
+      white-space: nowrap;
+    }
+
+    @media (max-width: 420px) {
+      .card { padding: 20px 14px 24px; }
+      /* 手機：全團合計自己一排，餐費、房費並排 */
+      .summary.three { grid-template-columns: 1fr 1fr; }
+      .summary.three .cell:first-child { grid-column: 1 / -1; border-bottom: 1px solid var(--rule); }
+      .summary.three .cell:nth-child(2) { border-left: none; }
+      .summary .cell { padding: 10px; }
+      .summary .num { font-size: 18px; }
+    }
+
+    /* 手機：家庭名稱一整排，下面一排三格金額（每格上方有小標題），不會擠 */
+    @media (max-width: 520px) {
+      .ledger .head-row { display: none; }
+      .ledger .row {
+        grid-template-columns: repeat(3, 1fr);
+        row-gap: 8px;
+        column-gap: 0;
+        padding: 12px 6px;
+      }
+      .ledger.meal-only .row { grid-template-columns: 1fr; }
+      .ledger .row > :first-child { grid-column: 1 / -1; }
+      .ledger .amt {
+        text-align: left;
+        padding: 6px 10px;
+        border-left: 1px solid var(--rule);
+        background: rgba(255, 255, 255, 0.6);
+      }
+      .ledger .amt:nth-child(2) { border-left: none; }
+      .ledger .amt::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--ink-faint);
+        letter-spacing: 1px;
+      }
+      .ledger.meal-only .amt { text-align: right; border-left: none; background: none; padding: 0; }
+      .ledger.meal-only .amt::before { content: none; }
+      .ledger.meal-only .row > :first-child { grid-column: auto; }
+      .ledger.meal-only .row { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
     }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h1 id="title">💰 費用統計</h1>
+    <div class="page-head">
+      <h1>費用統計</h1>
+      <span class="month-tag" id="monthTag"></span>
+    </div>
     <div class="toolbar" id="toolbar">
       <span id="updated">讀取中…</span>
       <button id="refreshBtn" type="button">重新整理</button>
@@ -283,11 +376,10 @@
     const LABEL = params.get("label") || MONTH;                              // 標題顯示的月份
     const TEAM_ORDER = ["花叢小隊", "天空小隊", "草原小隊", "大地小隊"];
 
-    document.getElementById("title").textContent = `💰 ${LABEL}費用統計`;
+    document.getElementById("monthTag").textContent = LABEL;
     document.title = `${LABEL}費用統計`;
 
     const content = document.getElementById("content");
-    const toolbar = document.getElementById("toolbar");
     const updatedEl = document.getElementById("updated");
     const refreshBtn = document.getElementById("refreshBtn");
 
@@ -361,7 +453,7 @@
       } catch (err) {
         console.error("讀取費用失敗：", err);
         updatedEl.textContent = "讀取失敗，請按「重新整理」再試一次";
-        if (!content.querySelector(".tiles")) {
+        if (!content.querySelector(".summary")) {
           content.innerHTML = `<div class="message">讀取失敗：${escapeHtml(err.name === "AbortError" ? "連線逾時" : err.message)}</div>`;
         }
       } finally {
@@ -397,7 +489,8 @@
         if (KID_CATEGORIES.includes(cat)) { kid++; kidPrices.add(price); }
         else { adult++; adultPrices.add(price); }
       });
-      return `大人 <b>${adult}</b> 人${priceText(adultPrices)}<br>小孩 <b>${kid}</b> 人${priceText(kidPrices)}`;
+      return `<span class="line">大人 <b>${adult}</b> 人${priceText(adultPrices)}</span><br>`
+        + `<span class="line">小孩 <b>${kid}</b> 人${priceText(kidPrices)}</span>`;
     }
 
     // 人數後面的每人餐費：「 × $90」；讀不到價格或同組價格不一樣就不顯示
@@ -429,65 +522,74 @@
 
       const byTeam = {};
       families.forEach(f => (byTeam[f.team || "未分小隊"] = byTeam[f.team || "未分小隊"] || []).push(f));
-      // 花天草地固定都有按鈕；試算表裡如果有其他小隊名稱，排在最後
+      // 花天草地固定都有分頁；試算表裡如果有其他小隊名稱，排在最後
       const teams = TEAM_ORDER.concat(Object.keys(byTeam).filter(t => !TEAM_ORDER.includes(t)));
       if (!teams.includes(selectedTeam)) selectedTeam = teams[0];
 
-      let html = `<div class="tiles">
-        <div class="tile total"><div class="label">全團費用合計</div><div class="num">${money(sum(families, "total"))}</div>
+      // 總計
+      let html = `<div class="summary${hasLodging ? " three" : ""}" style="--cols:${hasLodging ? 3 : 2}">
+        <div class="cell"><div class="label">全團合計</div><div class="num">${money(sum(families, "total"))}</div>
           <div class="sub">${families.length} 家庭</div></div>
-        <div class="tile"><div class="label">餐費</div><div class="num">${money(sum(families, "mealFee"))}</div>
+        <div class="cell"><div class="label">餐費</div><div class="num">${money(sum(families, "mealFee"))}</div>
           <div class="sub">${mealSplit(families)}</div></div>
-        ${hasLodging ? `<div class="tile"><div class="label">房費</div><div class="num">${money(sum(families, "roomFee"))}</div>
+        ${hasLodging ? `<div class="cell"><div class="label">房費</div><div class="num">${money(sum(families, "roomFee"))}</div>
           <div class="sub">住宿 ${sum(families, "lodgingCount")} 人</div></div>` : ""}
       </div>`;
 
-      // 切換按鈕：花叢｜天空｜草原｜大地
-      html += `<div class="team-switch">${teams.map(t =>
+      // 小隊分頁
+      html += `<div class="team-tabs">${teams.map(t =>
         `<button type="button" data-team="${escapeHtml(t)}"${t === selectedTeam ? ' class="on"' : ""}>${escapeHtml(t.replace(/小隊$/, ""))}</button>`).join("")}</div>`;
 
-      // 只顯示選到的小隊
-      {
-        const team = selectedTeam;
-        const list = sortFamilies(byTeam[team] || []);
-        html += `<div class="team" data-team="${escapeHtml(team)}">
-          <div class="team-head">
-            <span class="name">${escapeHtml(team)}</span>
-            <span class="count">${list.length} 家庭</span>
-            <span class="sum">${money(sum(list, "total"))}</span>
-          </div>`;
-        if (!list.length) html += `<div class="empty-team">這個小隊還沒有家庭填寫</div>`;
-        list.forEach(f => {
-          // 用餐人數放在名字後面（醒目標籤）；下面一行只在有住宿的月份顯示餐費和住宿明細
-          // （12月只有餐費，金額和右邊合計一樣，就不再重複）
-          const items = [];
-          if (hasLodging) {
-            items.push(`<span class="item">餐費 ${money(f.mealFee)}</span>`);
-            if (num(f.lodgingCount) || f.roomType) {
-              items.push(`<span class="item">住宿 ${num(f.lodgingCount)} 人`
-                + (f.roomType ? `・${escapeHtml(roomLabel(f.roomType))}` : "") + ` ${money(f.roomFee)}</span>`);
-            } else {
-              items.push(`<span class="item">不住宿</span>`);
-            }
-          }
-          const extra = Object.entries(f.extra || {}).map(([k, v]) =>
-            `<span class="chip">${escapeHtml(k)}：${escapeHtml(v)}</span>`).join("");
-          // 用餐人數不算小小蟻（名單照列，小小蟻加括號）；後台沒回傳名單時，用試算表的用餐人數
-          const eaters = countedMealNames(f);
-          html += `<div class="family">
-              <div class="fam-top"><span class="fam-name">${escapeHtml(f.registrant)}家</span>
-                <span class="meal-badge">用餐 <b>${eaters ? eaters.length : num(f.mealCount)}</b> 人</span>
-                <span class="fam-total">${money(f.total)}</span></div>
-              ${f.mealNames && f.mealNames.length
-                ? `<div class="meal-names">${f.mealNames.map(n => UNCOUNTED_CATEGORIES.includes(memberCat[n])
-                    ? `<span class="person">（${escapeHtml(n)}）</span>`
-                    : `<span class="person">${escapeHtml(n)}</span>`).join("、")}</div>` : ""}
-              ${items.length ? `<div class="fam-detail">${items.join("　")}</div>` : ""}
-              ${extra ? `<div class="fam-extra">${extra}</div>` : ""}
-            </div>`;
-        });
-        html += `</div>`;
+      const team = selectedTeam;
+      const list = sortFamilies(byTeam[team] || []);
+      html += `<div class="team-head" data-team="${escapeHtml(team)}">
+          <span class="name">${escapeHtml(team)}</span>
+          <span class="count">${list.length} 家庭</span>
+        </div>`;
+
+      if (!list.length) {
+        content.innerHTML = html + `<div class="empty-team">這個小隊還沒有家庭填寫</div>`;
+        return;
       }
+
+      // 帳本：每家一列
+      html += `<div class="ledger${hasLodging ? "" : " meal-only"}" data-team="${escapeHtml(team)}">
+        <div class="row head-row"><span>家庭</span>${hasLodging
+          ? `<span class="amt">餐費</span><span class="amt">房費</span><span class="amt">合計</span>`
+          : `<span class="amt">餐費</span>`}</div>`;
+
+      list.forEach(f => {
+        // 用餐人數不算小小蟻（名單照列，小小蟻加括號）；後台沒回傳名單時，用試算表的用餐人數
+        const eaters = countedMealNames(f);
+        const names = f.mealNames && f.mealNames.length
+          ? `<div class="meal-names">${f.mealNames.map(n => UNCOUNTED_CATEGORIES.includes(memberCat[n])
+              ? `<span class="person">（${escapeHtml(n)}）</span>`
+              : `<span class="person">${escapeHtml(n)}</span>`).join("、")}</div>` : "";
+        const extra = Object.entries(f.extra || {}).map(([k, v]) =>
+          `<span class="chip">${escapeHtml(k)}：${escapeHtml(v)}</span>`).join(" ");
+        const lodged = num(f.lodgingCount) || f.roomType;
+
+        html += `<div class="row family-row">
+          <div>
+            <div class="fam-line"><span class="fam-name">${escapeHtml(f.registrant)}家</span>
+              <span class="meal-badge">用餐 <b>${eaters ? eaters.length : num(f.mealCount)}</b> 人</span></div>
+            ${names}${extra}
+          </div>
+          ${hasLodging ? `
+            <div class="amt" data-label="餐費">${money(f.mealFee)}</div>
+            <div class="amt" data-label="房費">${lodged ? money(f.roomFee) : "—"}<span class="note">${lodged
+              ? escapeHtml(roomLabel(f.roomType || "")) || `${num(f.lodgingCount)} 人`
+              : "不住宿"}</span></div>
+            <div class="amt total" data-label="合計">${money(f.total)}</div>`
+          : `<div class="amt total" data-label="餐費">${money(f.total)}</div>`}
+        </div>`;
+      });
+
+      // 小計列
+      html += `<div class="row foot-row"><span>小計</span>${hasLodging
+        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "roomFee"))}</span><span class="amt" data-label="合計">${money(sum(list, "total"))}</span>`
+        : `<span class="amt">${money(sum(list, "total"))}</span>`}</div>`;
+      html += `</div>`;
 
       content.innerHTML = html;
     }
@@ -496,7 +598,7 @@
     let selectedTeam = TEAM_ORDER[0];
     let lastFamilies = [];
     content.addEventListener("click", e => {
-      const btn = e.target.closest(".team-switch button");
+      const btn = e.target.closest(".team-tabs button");
       if (!btn || btn.dataset.team === selectedTeam) return;
       selectedTeam = btn.dataset.team;
       render(lastFamilies);
