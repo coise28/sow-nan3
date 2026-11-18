@@ -305,6 +305,7 @@
     const FORM_PAGES = { "12月": "./", "1月": "january/" };
     let familyOrder = null; // 自然名 → 在名單裡的順序
     const memberCat = {};   // 自然名 → 分類代碼（表單名單裡的 category，例如 A小蟻）
+    let mealFeeOf = null;   // 表單裡的 getMealFee：分類代碼 → 每人餐費
 
     async function loadFamilyOrder() {
       if (familyOrder || !FORM_PAGES[LABEL]) return;
@@ -312,6 +313,9 @@
         const src = await (await fetch(FORM_PAGES[LABEL])).text();
         const lit = src.match(/const TEAM_DATA = (\{[\s\S]*?\n\s*\});/)[1];
         const teamData = Function('"use strict"; return ' + lit)();
+        // 每人餐費也從表單讀（各月價格不同，例如 12月 $90、1月 $150）
+        const feeFn = src.match(/function getMealFee\(category\) \{[\s\S]*?\n\s*\}/);
+        if (feeFn) mealFeeOf = Function('"use strict"; return (' + feeFn[0] + ")")();
         familyOrder = {};
         let i = 0;
         Object.values(teamData).forEach(list => list.forEach(fam => {
@@ -385,12 +389,22 @@
       const names = families.flatMap(f => f.mealNames || []);
       if (!names.length || !Object.keys(memberCat).length) return `用餐 ${total} 人`;
       let adult = 0, kid = 0;
+      const adultPrices = new Set(), kidPrices = new Set();
       names.forEach(n => {
         const cat = memberCat[n];
         if (UNCOUNTED_CATEGORIES.includes(cat)) return;
-        if (KID_CATEGORIES.includes(cat)) kid++; else adult++;
+        const price = mealFeeOf ? mealFeeOf(cat) : null;
+        if (KID_CATEGORIES.includes(cat)) { kid++; kidPrices.add(price); }
+        else { adult++; adultPrices.add(price); }
       });
-      return `大人 <b>${adult}</b> 人<br>小孩 <b>${kid}</b> 人`;
+      return `大人 <b>${adult}</b> 人${priceText(adultPrices)}<br>小孩 <b>${kid}</b> 人${priceText(kidPrices)}`;
+    }
+
+    // 人數後面的每人餐費：「 × $90」；讀不到價格或同組價格不一樣就不顯示
+    function priceText(prices) {
+      if (prices.size !== 1) return "";
+      const p = [...prices][0];
+      return typeof p === "number" ? ` × ${money(p)}` : "";
     }
 
     /* ---------- 畫面 ---------- */
