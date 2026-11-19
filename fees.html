@@ -282,11 +282,17 @@
       color: var(--ink-soft);
     }
 
-    /* 小計列：上方雙線 */
+    /* 小計列：在家庭列表最上面，下方雙線和各家分開 */
     .ledger .foot-row {
-      border-top: 3px double var(--rule-strong);
+      border-top: 1px solid var(--rule-strong);
+      border-bottom: 3px double var(--rule-strong);
+      background: var(--team-bg, transparent);
       font-weight: 700;
       color: var(--team, var(--ink));
+    }
+
+    .ledger .foot-row + .row {
+      border-top: none;
     }
 
     .empty-team,
@@ -558,6 +564,11 @@
           ? `<span class="amt">餐費</span><span class="amt">房費</span><span class="amt">合計</span>`
           : `<span class="amt">餐費</span>`}</div>`;
 
+      // 小計列：放在最上面（表頭下方），先看到這隊的總數
+      html += `<div class="row foot-row"><span>小計</span>${hasLodging
+        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "roomFee"))}</span><span class="amt" data-label="合計">${money(sum(list, "total"))}</span>`
+        : `<span class="amt">${money(sum(list, "total"))}</span>`}</div>`;
+
       list.forEach(f => {
         // 用餐人數不算小小蟻（名單照列，小小蟻加括號）；後台沒回傳名單時，用試算表的用餐人數
         const eaters = countedMealNames(f);
@@ -585,10 +596,6 @@
         </div>`;
       });
 
-      // 小計列
-      html += `<div class="row foot-row"><span>小計</span>${hasLodging
-        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "roomFee"))}</span><span class="amt" data-label="合計">${money(sum(list, "total"))}</span>`
-        : `<span class="amt">${money(sum(list, "total"))}</span>`}</div>`;
       html += `</div>`;
 
       content.innerHTML = html;
