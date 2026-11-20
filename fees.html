@@ -377,9 +377,12 @@
        ============================================================ */
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyogdHKOd1yRbqzglVpDZL_i1sRR-1iq69zucNT1gIeuZund9AmvWvM0WxTrKCrw905/exec";
     const params = new URLSearchParams(location.search);
-    // 有 label 沒 month 是 12月（試算表分頁沒有月份）；兩個都沒有時預設 1月
-    const MONTH = params.get("month") ?? (params.get("label") ? "" : "1月"); // 試算表分頁用的月份
-    const LABEL = params.get("label") || MONTH;                              // 標題顯示的月份
+    // 試算表分頁用的月份：12月用舊分頁（沒有月份），其他月份用「{月份}-原始資料」
+    // 所以 ?label=1月 和 ?month=1月 都會讀 1月；只有 12月 要讀舊分頁
+    const LEGACY_LABELS = ["12月"];
+    const labelParam = params.get("label") || "";
+    const MONTH = params.get("month") ?? (LEGACY_LABELS.includes(labelParam) ? "" : (labelParam || "1月"));
+    const LABEL = labelParam || MONTH;                 // 標題顯示的月份
     const TEAM_ORDER = ["花叢小隊", "天空小隊", "草原小隊", "大地小隊"];
 
     document.getElementById("monthTag").textContent = LABEL;

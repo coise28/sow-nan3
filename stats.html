@@ -396,8 +396,12 @@
        ============================================================ */
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyogdHKOd1yRbqzglVpDZL_i1sRR-1iq69zucNT1gIeuZund9AmvWvM0WxTrKCrw905/exec";
     const params = new URLSearchParams(location.search);
-    const MONTH = params.get("month") || "";           // 試算表分頁用的月份
-    const LABEL = params.get("label") || MONTH;        // 標題顯示的月份（兩個都沒有時不顯示月份）
+    // 試算表分頁用的月份：12月用舊分頁（沒有月份），其他月份用「{月份}-原始資料」
+    // 所以 ?label=1月 和 ?month=1月 都會讀 1月；只有 12月 要讀舊分頁
+    const LEGACY_LABELS = ["12月"];
+    const labelParam = params.get("label") || "";
+    const MONTH = params.get("month") ?? (LEGACY_LABELS.includes(labelParam) ? "" : (labelParam || ""));
+    const LABEL = labelParam || MONTH;                 // 標題顯示的月份
 
     // 顯示順序：狀態、團別、分類代碼
     // 顯示這幾種狀態（分團也列出，但不算進總出席人數）
