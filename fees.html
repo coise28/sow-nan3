@@ -196,6 +196,15 @@
       --grid: minmax(0, 1fr) 104px;
     }
 
+    /* 有早餐費用：家庭｜餐費｜房費｜早餐｜合計 */
+    .ledger.with-breakfast {
+      --grid: minmax(0, 1fr) 80px 92px 80px 96px;
+    }
+
+    .ledger.with-breakfast .row {
+      column-gap: 14px;
+    }
+
     .ledger .row {
       display: grid;
       grid-template-columns: var(--grid);
@@ -317,6 +326,8 @@
       .summary.three { grid-template-columns: 1fr 1fr; }
       .summary.three .cell:first-child { grid-column: 1 / -1; border-bottom: 1px solid var(--rule); }
       .summary.three .cell:nth-child(2) { border-left: none; }
+      /* 有早餐：全團合計一排，餐費、房費、早餐三格並排 */
+      .summary.four { grid-template-columns: repeat(3, 1fr); }
       .summary .cell { padding: 10px; }
       .summary .num { font-size: 18px; }
     }
@@ -331,6 +342,8 @@
         padding: 12px 6px;
       }
       .ledger.meal-only .row { grid-template-columns: 1fr; }
+      .ledger.with-breakfast .row { grid-template-columns: repeat(4, 1fr); column-gap: 0; }
+      .ledger.with-breakfast .amt { padding: 6px 6px; font-size: 14px; }
       .ledger .row > :first-child { grid-column: 1 / -1; }
       .ledger .amt {
         text-align: left;
@@ -525,9 +538,17 @@
       // 12月沒有住宿：試算表沒有房費欄，就不顯示房費和住宿
       const hasLodging = families.some(f => f.roomFee !== undefined);
 
+      // 試算表有「早餐費用」欄（幹部手動填）就多一欄早餐
+      const hasBreakfast = hasLodging && families.some(f => f.breakfastFee !== undefined);
+
       const sum = (list, key) => list.reduce((n, f) => n + num(f[key]), 0);
-      // 費用合計欄空白時（舊資料），用餐費＋房費補上
-      families.forEach(f => { if (f.total === "" || f.total == null) f.total = num(f.mealFee) + num(f.roomFee); });
+      if (hasBreakfast) {
+        // 合計＝餐費＋房費＋早餐（早餐是手動填的，網頁自己加總，填了馬上算進去）
+        families.forEach(f => { f.total = num(f.mealFee) + num(f.roomFee) + num(f.breakfastFee); });
+      } else {
+        // 費用合計欄空白時（舊資料），用餐費＋房費補上
+        families.forEach(f => { if (f.total === "" || f.total == null) f.total = num(f.mealFee) + num(f.roomFee); });
+      }
 
       const byTeam = {};
       families.forEach(f => (byTeam[f.team || "未分小隊"] = byTeam[f.team || "未分小隊"] || []).push(f));
@@ -536,13 +557,15 @@
       if (!teams.includes(selectedTeam)) selectedTeam = teams[0];
 
       // 總計
-      let html = `<div class="summary${hasLodging ? " three" : ""}" style="--cols:${hasLodging ? 3 : 2}">
+      let html = `<div class="summary${hasLodging ? " three" : ""}${hasBreakfast ? " four" : ""}" style="--cols:${hasBreakfast ? 4 : hasLodging ? 3 : 2}">
         <div class="cell"><div class="label">全團合計</div><div class="num">${money(sum(families, "total"))}</div>
           <div class="sub">${families.length} 家庭</div></div>
         <div class="cell"><div class="label">餐費</div><div class="num">${money(sum(families, "mealFee"))}</div>
           <div class="sub">${mealSplit(families)}</div></div>
         ${hasLodging ? `<div class="cell"><div class="label">房費</div><div class="num">${money(sum(families, "roomFee"))}</div>
           <div class="sub">住宿 ${sum(families, "lodgingCount")} 人</div></div>` : ""}
+        ${hasBreakfast ? `<div class="cell"><div class="label">早餐</div><div class="num">${money(sum(families, "breakfastFee"))}</div>
+          <div class="sub">${families.filter(f => num(f.breakfastFee)).length} 家庭</div></div>` : ""}
       </div>`;
 
       // 小隊分頁
@@ -562,14 +585,17 @@
       }
 
       // 帳本：每家一列
-      html += `<div class="ledger${hasLodging ? "" : " meal-only"}" data-team="${escapeHtml(team)}">
+      html += `<div class="ledger${hasLodging ? "" : " meal-only"}${hasBreakfast ? " with-breakfast" : ""}" data-team="${escapeHtml(team)}">
         <div class="row head-row"><span>家庭</span>${hasLodging
-          ? `<span class="amt">餐費</span><span class="amt">房費</span><span class="amt">合計</span>`
+          ? `<span class="amt">餐費</span><span class="amt">房費</span>`
+            + (hasBreakfast ? `<span class="amt">早餐</span>` : "") + `<span class="amt">合計</span>`
           : `<span class="amt">餐費</span>`}</div>`;
 
       // 小計列：放在最上面（表頭下方），先看到這隊的總數
       html += `<div class="row foot-row"><span>小計</span>${hasLodging
-        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "roomFee"))}</span><span class="amt" data-label="合計">${money(sum(list, "total"))}</span>`
+        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "roomFee"))}</span>`
+          + (hasBreakfast ? `<span class="amt" data-label="早餐">${money(sum(list, "breakfastFee"))}</span>` : "")
+          + `<span class="amt" data-label="合計">${money(sum(list, "total"))}</span>`
         : `<span class="amt">${money(sum(list, "total"))}</span>`}</div>`;
 
       list.forEach(f => {
@@ -594,6 +620,7 @@
             <div class="amt" data-label="房費">${lodged ? money(f.roomFee) : "—"}<span class="note">${lodged
               ? escapeHtml(roomLabel(f.roomType || "")) || `${num(f.lodgingCount)} 人`
               : "不住宿"}</span></div>
+            ${hasBreakfast ? `<div class="amt" data-label="早餐">${num(f.breakfastFee) ? money(f.breakfastFee) : "—"}</div>` : ""}
             <div class="amt total" data-label="合計">${money(f.total)}</div>`
           : `<div class="amt total" data-label="餐費">${money(f.total)}</div>`}
         </div>`;
