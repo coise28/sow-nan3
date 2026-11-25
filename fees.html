@@ -242,6 +242,17 @@
       font-weight: 700;
     }
 
+    /* 有填實際房費：金額用強調色，下面小字劃線顯示原本的房費 */
+    .ledger .amt.adjusted {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .ledger .amt .note.was {
+      text-decoration: line-through;
+      font-weight: 400;
+    }
+
     .fam-line {
       display: flex;
       align-items: center;
@@ -541,10 +552,19 @@
       // 試算表有「早餐費用」欄（幹部手動填）就多一欄早餐
       const hasBreakfast = hasLodging && families.some(f => f.breakfastFee !== undefined);
 
+      // 試算表有「實際房費」欄（幹部依房間分配表手動填，例如兩家合住各付一半）：
+      // 有填就用實際房費，沒填用表單算的房費
+      families.forEach(f => {
+        const a = f.actualRoomFee;
+        f.roomAdjusted = a !== undefined && a !== null && a !== "";
+        f.effRoomFee = f.roomAdjusted ? num(a) : num(f.roomFee);
+      });
+      const hasActualRoom = families.some(f => f.roomAdjusted);
+
       const sum = (list, key) => list.reduce((n, f) => n + num(f[key]), 0);
-      if (hasBreakfast) {
-        // 合計＝餐費＋房費＋早餐（早餐是手動填的，網頁自己加總，填了馬上算進去）
-        families.forEach(f => { f.total = num(f.mealFee) + num(f.roomFee) + num(f.breakfastFee); });
+      if (hasBreakfast || hasActualRoom) {
+        // 合計＝餐費＋房費（實際房費）＋早餐；手動欄位填了馬上算進去，所以網頁自己加總
+        families.forEach(f => { f.total = num(f.mealFee) + f.effRoomFee + num(f.breakfastFee); });
       } else {
         // 費用合計欄空白時（舊資料），用餐費＋房費補上
         families.forEach(f => { if (f.total === "" || f.total == null) f.total = num(f.mealFee) + num(f.roomFee); });
@@ -562,7 +582,7 @@
           <div class="sub">${families.length} 家庭</div></div>
         <div class="cell"><div class="label">餐費</div><div class="num">${money(sum(families, "mealFee"))}</div>
           <div class="sub">${mealSplit(families)}</div></div>
-        ${hasLodging ? `<div class="cell"><div class="label">房費</div><div class="num">${money(sum(families, "roomFee"))}</div>
+        ${hasLodging ? `<div class="cell"><div class="label">房費</div><div class="num">${money(sum(families, "effRoomFee"))}</div>
           <div class="sub">住宿 ${sum(families, "lodgingCount")} 人</div></div>` : ""}
         ${hasBreakfast ? `<div class="cell"><div class="label">早餐</div><div class="num">${money(sum(families, "breakfastFee"))}</div>
           <div class="sub">${families.filter(f => num(f.breakfastFee)).length} 家庭</div></div>` : ""}
@@ -593,7 +613,7 @@
 
       // 小計列：放在最上面（表頭下方），先看到這隊的總數
       html += `<div class="row foot-row"><span>小計</span>${hasLodging
-        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "roomFee"))}</span>`
+        ? `<span class="amt" data-label="餐費">${money(sum(list, "mealFee"))}</span><span class="amt" data-label="房費">${money(sum(list, "effRoomFee"))}</span>`
           + (hasBreakfast ? `<span class="amt" data-label="早餐">${money(sum(list, "breakfastFee"))}</span>` : "")
           + `<span class="amt" data-label="合計">${money(sum(list, "total"))}</span>`
         : `<span class="amt">${money(sum(list, "total"))}</span>`}</div>`;
@@ -617,9 +637,11 @@
           </div>
           ${hasLodging ? `
             <div class="amt" data-label="餐費">${money(f.mealFee)}</div>
-            <div class="amt" data-label="房費">${lodged ? money(f.roomFee) : "—"}<span class="note">${lodged
+            <div class="amt${f.roomAdjusted ? " adjusted" : ""}" data-label="房費">${f.roomAdjusted
+              ? money(f.effRoomFee) : lodged ? money(f.roomFee) : "—"}<span class="note">${lodged
               ? escapeHtml(roomLabel(f.roomType || "")) || `${num(f.lodgingCount)} 人`
-              : "不住宿"}</span></div>
+              : "不住宿"}</span>${f.roomAdjusted && num(f.roomFee) !== f.effRoomFee
+              ? `<span class="note was">原 ${money(f.roomFee)}</span>` : ""}</div>
             ${hasBreakfast ? `<div class="amt" data-label="早餐">${num(f.breakfastFee) ? money(f.breakfastFee) : "—"}</div>` : ""}
             <div class="amt total" data-label="合計">${money(f.total)}</div>`
           : `<div class="amt total" data-label="餐費">${money(f.total)}</div>`}

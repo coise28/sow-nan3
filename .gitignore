@@ -1,2 +1,5 @@
 # Mac 的 Finder 自動產生的檔案，不需要上傳
 .DS_Store
+
+# Claude 預覽用的暫存設定，不需要上傳
+.claude/
